@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.4)
+cmake_minimum_required(VERSION 3.5)
 project(main VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -22,8 +22,14 @@ file(COPY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_
 
 # Raylib
 find_package(raylib CONFIG REQUIRED)
+# glfw3
+find_package(glfw3 CONFIG REQUIRED)
+
 target_include_directories(main PRIVATE ${raylib_INCLUDE_DIRS})
-target_link_libraries(main PRIVATE ${raylib_LIBRARIES})
+#target_link_libraries(main PRIVATE ${raylib_LIBRARIES})
+
+target_link_libraries(main PRIVATE raylib glfw)
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # From "Working with CMake" documentation:
     target_link_libraries(main PRIVATE "-framework IOKit" "-framework Cocoa" "-framework OpenGL")
