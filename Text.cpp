@@ -5,8 +5,6 @@
  * @copyright Copyright (c) 2022-2023
  */
 
-#include <fstream>
-
 #include "Text.h"
 
 using namespace std;

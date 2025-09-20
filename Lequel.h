@@ -12,12 +12,13 @@
 
 #include <list>
 #include <map>
+#include <unordered_map>
 #include <string>
 
 #include "Text.h"
 
 // TrigramProfile: map of trigram -> frequency
-typedef std::map<std::string, float> TrigramProfile;
+typedef std::unordered_map<std::string, float> TrigramProfile;
 
 // TrigramList: list of trigrams
 typedef std::list<std::string> TrigramList;
@@ -35,5 +36,7 @@ TrigramProfile buildTrigramProfile(const Text &text);
 void normalizeTrigramProfile(TrigramProfile &trigramProfile);
 float getCosineSimilarity(TrigramProfile &textProfile, TrigramProfile &languageProfile);
 std::string identifyLanguage(const Text &text, LanguageProfiles &languages);
+
+std::string identifyLanguageFromPath(char* path, LanguageProfiles &languages);
 
 #endif

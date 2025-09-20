@@ -4,17 +4,23 @@
  *
  * @copyright Copyright (c) 2022-2023
  *
- * @cite https://towardsdatascience.com/understanding-cosine-similarity-and-its-application-fd42f585296a
+ * @cite
+ * https://towardsdatascience.com/understanding-cosine-similarity-and-its-application-fd42f585296a
  */
-
-#include <cmath>
-#include <codecvt>
-#include <locale>
-#include <iostream>
 
 #include "Lequel.h"
 
+#include <cmath>
+#include <codecvt>
+#include <iostream>
+#include <locale>
+
+#define LINE_LIMIT 10
+
 using namespace std;
+
+
+// ============ UNUSED =============//
 
 /**
  * @brief Builds a trigram profile from a given text.
@@ -22,15 +28,12 @@ using namespace std;
  * @param text Vector of lines (Text)
  * @return TrigramProfile The trigram profile
  */
-TrigramProfile buildTrigramProfile(const Text &text)
-{
+TrigramProfile buildTrigramProfile(const Text& text) {
     wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 
     // Your code goes here...
-    for (auto line : text)
-    {
-        if ((line.length() > 0) &&
-            (line[line.length() - 1] == '\r'))
+    for (auto line : text) {
+        if ((line.length() > 0) && (line[line.length() - 1] == '\r'))
             line = line.substr(0, line.length() - 1);
     }
 
@@ -40,16 +43,79 @@ TrigramProfile buildTrigramProfile(const Text &text)
     // Tip: convert wstring to UTF-8 string
     // string trigram = converter.to_bytes(unicodeTrigram);
 
-    return TrigramProfile(); // Fill-in result here
+    return TrigramProfile();  // Fill-in result here
 }
+
+// ==================================//
+
+/**
+ * @name addToTrigramProfile
+ * @brief Adds data to a previously created trigram profile from a given text.
+ *
+ * @param text String of UTF-8 Characters
+ */
+static void addToTrigramProfile(const std::string& text,
+                                TrigramProfile& profile) {
+    if (text.length() < 3)
+        return;
+
+    // One-time string creation
+	// It's reused for every function call
+    static std::string trigram;
+    trigram.clear();
+    trigram.reserve(12);
+
+    // Native UTF-8 iteration
+    unsigned short int char_count = 0;
+    unsigned short int trigram_start = 0;
+    unsigned short int trigram_next = 0;
+    unsigned short int text_position = 0;
+
+    while (text_position < text.length()) {
+        // Saves first position of the trigram
+        if (char_count == 0) {
+            trigram_start = text_position;
+        }
+        // Saves first position of the next trigram
+        else if (char_count == 1) {
+            trigram_next = text_position;
+        }
+
+        // Identifies UTF-8 character length
+        // KNOWN ISSUE: It never expects a middle byte
+        unsigned char character = text[text_position];
+        if (!(character & 0b10000000)) {
+            text_position += 1;  // 1 Byte
+        } else if ((character & 0b11100000) == 0b11000000) {
+            text_position += 2;  // 2 Bytes
+        } else if ((character & 0b11110000) == 0b11100000) {
+            text_position += 3;  // 3 Bytes
+        } else {
+            text_position += 4;  // 4 Bytes
+        }
+        // text_position += (byte < 0x80) ? 1 : (byte < 0xE0) ? 2 : (byte < 0xF0) ? 3 : 4;
+
+        char_count++;
+
+        // Extracts trigram
+        if (char_count == 3) {
+            trigram.assign(text, trigram_start, text_position - trigram_start);
+            profile[trigram]++;
+
+            // Resets starting from the second position
+            text_position = trigram_next;
+            char_count = 0;
+        }
+    }
+}
+
 
 /**
  * @brief Normalizes a trigram profile.
  *
  * @param trigramProfile The trigram profile.
  */
-void normalizeTrigramProfile(TrigramProfile &trigramProfile)
-{
+void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
     // Your code goes here...
 
     return;
@@ -62,11 +128,10 @@ void normalizeTrigramProfile(TrigramProfile &trigramProfile)
  * @param languageProfile The language trigram profile
  * @return float The cosine similarity score
  */
-float getCosineSimilarity(TrigramProfile &textProfile, TrigramProfile &languageProfile)
-{
+float getCosineSimilarity(TrigramProfile& textProfile, TrigramProfile& languageProfile) {
     // Your code goes here...
 
-    return 0; // Fill-in result here
+    return 0;  // Fill-in result here
 }
 
 /**
@@ -76,9 +141,38 @@ float getCosineSimilarity(TrigramProfile &textProfile, TrigramProfile &languageP
  * @param languages A list of Language objects
  * @return string The language code of the most likely language
  */
-string identifyLanguage(const Text &text, LanguageProfiles &languages)
-{
+string identifyLanguage(const Text& text, LanguageProfiles& languages) {
     // Your code goes here...
 
-    return ""; // Fill-in result here
+    return "";  // Fill-in result here
+}
+
+/**
+ * @name identifyLanguageFromPath
+ * @brief Identifies the language of a text given the file path;
+ *
+ * @param path string of characters for the file path
+ * @param languages A list of Language objects
+ * @return string The language code of the most likely language
+ */
+std::string identifyLanguageFromPath(char* path, LanguageProfiles& languages) {
+    std::ifstream file(path);
+    std::string extractedText;
+    TrigramProfile profile;
+    // wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+
+    if (!file.is_open()) {
+        perror(("Error while opening file " + std::string(path)).c_str());
+        return "";
+    }
+
+    for (int counter = 0; (counter < LINE_LIMIT) && (std::getline(file, extractedText));
+         counter++) {
+        addToTrigramProfile(extractedText, profile);
+    }
+
+    // while (std::getline(file, extractedText)) {
+    // }
+
+    return "Testing...";  // Fill-in result here
 }
