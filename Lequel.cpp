@@ -116,9 +116,26 @@ static void addToTrigramProfile(const std::string& text,
  * @param trigramProfile The trigram profile.
  */
 void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
-    // Your code goes here...
+   
+    //Sums the squares of the trigram frequencies
+   float sumSquares = 0.0f;
+   for (auto &element : trigramProfile)
+   {
+       sumSquares += element.second * element.second;
+   }
+  
+   // Calculates the L2 norm
+   float norm = sqrtf(sumSquares);
+   if (norm == 0.0f) return;
+  
+   const float invNorm = 1.0f / norm;
+  
+   // Normalizes each trigram frequency by dividing by the norm
+   for (auto &element : trigramProfile)
+   {
+        element.second *= invNorm;
+   }
 
-    return;
 }
 
 /**
@@ -129,9 +146,33 @@ void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
  * @return float The cosine similarity score
  */
 float getCosineSimilarity(TrigramProfile& textProfile, TrigramProfile& languageProfile) {
-    // Your code goes here...
+    
+   const size_t text_size = textProfile.size();
+   const size_t lang_size = languageProfile.size();
+  
+   // Early exit for empty profiles
+   if (text_size == 0 || lang_size == 0)
+   {
+       return 0.0f;
+   }
 
-    return 0;  // Fill-in result here
+   float dotProduct = 0.0f;
+  
+   // Computes dot product by iterating over the smaller profile
+   if (text_size <= lang_size) {
+       for (const auto &entry : textProfile) {
+           const auto it = languageProfile.find(entry.first);
+           dotProduct += (it != languageProfile.end()) ? entry.second * it->second : 0.0f;
+       }
+   } else {
+       for (const auto &entry : languageProfile) {
+           const auto it = textProfile.find(entry.first);
+           dotProduct += (it != textProfile.end()) ? entry.second * it->second : 0.0f;
+       }
+   }
+  
+   return dotProduct;
+
 }
 
 /**
