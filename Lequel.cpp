@@ -15,10 +15,9 @@
 #include <iostream>
 #include <locale>
 
-#define LINE_LIMIT 10
+#define LINE_LIMIT 20
 
 using namespace std;
-
 
 // ============ UNUSED =============//
 
@@ -54,13 +53,12 @@ TrigramProfile buildTrigramProfile(const Text& text) {
  *
  * @param text String of UTF-8 Characters
  */
-static void addToTrigramProfile(const std::string& text,
-                                TrigramProfile& profile) {
+static void addToTrigramProfile(const std::string& text, TrigramProfile& profile) {
     if (text.length() < 3)
         return;
 
     // One-time string creation
-	// It's reused for every function call
+    // It's reused for every function call
     static std::string trigram;
     trigram.clear();
     trigram.reserve(12);
@@ -109,33 +107,29 @@ static void addToTrigramProfile(const std::string& text,
     }
 }
 
-
 /**
  * @brief Normalizes a trigram profile.
  *
  * @param trigramProfile The trigram profile.
  */
 void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
-   
-    //Sums the squares of the trigram frequencies
-   float sumSquares = 0.0f;
-   for (auto &element : trigramProfile)
-   {
-       sumSquares += element.second * element.second;
-   }
-  
-   // Calculates the L2 norm
-   float norm = sqrtf(sumSquares);
-   if (norm == 0.0f) return;
-  
-   const float invNorm = 1.0f / norm;
-  
-   // Normalizes each trigram frequency by dividing by the norm
-   for (auto &element : trigramProfile)
-   {
-        element.second *= invNorm;
-   }
+    // Sums the squares of the trigram frequencies
+    float sumSquares = 0.0f;
+    for (auto& element : trigramProfile) {
+        sumSquares += element.second * element.second;
+    }
 
+    // Calculates the L2 norm
+    float norm = sqrtf(sumSquares);
+    if (norm == 0.0f)
+        return;
+
+    const float invNorm = 1.0f / norm;
+
+    // Normalizes each trigram frequency by dividing by the norm
+    for (auto& element : trigramProfile) {
+        element.second *= invNorm;
+    }
 }
 
 /**
@@ -146,33 +140,30 @@ void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
  * @return float The cosine similarity score
  */
 float getCosineSimilarity(TrigramProfile& textProfile, TrigramProfile& languageProfile) {
-    
-   const size_t text_size = textProfile.size();
-   const size_t lang_size = languageProfile.size();
-  
-   // Early exit for empty profiles
-   if (text_size == 0 || lang_size == 0)
-   {
-       return 0.0f;
-   }
+    const size_t text_size = textProfile.size();
+    const size_t lang_size = languageProfile.size();
 
-   float dotProduct = 0.0f;
-  
-   // Computes dot product by iterating over the smaller profile
-   if (text_size <= lang_size) {
-       for (const auto &entry : textProfile) {
-           const auto it = languageProfile.find(entry.first);
-           dotProduct += (it != languageProfile.end()) ? entry.second * it->second : 0.0f;
-       }
-   } else {
-       for (const auto &entry : languageProfile) {
-           const auto it = textProfile.find(entry.first);
-           dotProduct += (it != textProfile.end()) ? entry.second * it->second : 0.0f;
-       }
-   }
-  
-   return dotProduct;
+    // Early exit for empty profiles
+    if (text_size == 0 || lang_size == 0) {
+        return 0.0f;
+    }
 
+    float dotProduct = 0.0f;
+
+    // Computes dot product by iterating over the smaller profile
+    if (text_size <= lang_size) {
+        for (const auto& entry : textProfile) {
+            const auto it = languageProfile.find(entry.first);
+            dotProduct += (it != languageProfile.end()) ? entry.second * it->second : 0.0f;
+        }
+    } else {
+        for (const auto& entry : languageProfile) {
+            const auto it = textProfile.find(entry.first);
+            dotProduct += (it != textProfile.end()) ? entry.second * it->second : 0.0f;
+        }
+    }
+
+    return dotProduct;
 }
 
 /**
@@ -200,6 +191,10 @@ std::string identifyLanguageFromPath(char* path, LanguageProfiles& languages) {
     std::ifstream file(path);
     std::string extractedText;
     TrigramProfile profile;
+
+    float max_cosine = 0;
+    float temp_cosine = 0;
+    std::string max_cosine_name;
     // wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 
     if (!file.is_open()) {
@@ -212,8 +207,18 @@ std::string identifyLanguageFromPath(char* path, LanguageProfiles& languages) {
         addToTrigramProfile(extractedText, profile);
     }
 
+    normalizeTrigramProfile(profile);
+
+    for (auto languageProfile : languages) {
+        temp_cosine = getCosineSimilarity(profile, languageProfile.trigramProfile);
+        if (temp_cosine > max_cosine) {
+            max_cosine = temp_cosine;
+            max_cosine_name = languageProfile.languageCode;
+        }
+    }
+
     // while (std::getline(file, extractedText)) {
     // }
 
-    return "Testing...";  // Fill-in result here
+    return max_cosine_name;  // Fill-in result here
 }
