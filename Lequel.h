@@ -38,5 +38,6 @@ float getCosineSimilarity(TrigramProfile &textProfile, TrigramProfile &languageP
 std::string identifyLanguage(const Text &text, LanguageProfiles &languages);
 
 std::string identifyLanguageFromPath(char* path, LanguageProfiles &languages);
+std::string identifyLanguageFromClipboard(std::string& clipboard, LanguageProfiles& languages);
 
 #endif

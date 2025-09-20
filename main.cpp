@@ -92,12 +92,13 @@ int main(int, char*[]) {
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_V) && (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL) ||
                                     IsKeyDown(KEY_LEFT_SUPER) || IsKeyDown(KEY_RIGHT_SUPER))) {
-            const char* clipboard = GetClipboardText();
+            // const char* clipboard = GetClipboardText();
+            std::string clipboard = GetClipboardText();
 
-            Text text;
-            getTextFromString(clipboard, text);
+            // Text text;
+            // getTextFromString(clipboard, text);
 
-            languageCode = identifyLanguage(text, languages);
+            languageCode = identifyLanguageFromClipboard(clipboard, languages);
         }
 
         if (IsFileDropped()) {

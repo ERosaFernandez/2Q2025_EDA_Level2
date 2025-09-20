@@ -15,7 +15,7 @@
 #include <iostream>
 #include <locale>
 
-#define LINE_LIMIT 20
+#define LINE_LIMIT 50
 
 using namespace std;
 
@@ -217,8 +217,69 @@ std::string identifyLanguageFromPath(char* path, LanguageProfiles& languages) {
         }
     }
 
-    // while (std::getline(file, extractedText)) {
-    // }
+    return max_cosine_name;
+}
 
-    return max_cosine_name;  // Fill-in result here
+/**
+ * @name identifyLanguageFromClipboard
+ * @brief Identifies the language of a text given the clipboard contents
+ *
+ * @param path string of characters from the clipboard
+ * @param languages A list of Language objects
+ * @return string The language code of the most likely language
+ */
+std::string identifyLanguageFromClipboard(std::string& clipboard, LanguageProfiles& languages) {
+    std::string extractedText;
+    TrigramProfile profile;
+
+    float max_cosine = 0;
+    float temp_cosine = 0;
+    std::string max_cosine_name;
+
+    // Special case: empty clipboard
+    if (clipboard.empty()) {
+        perror(("Error while opening Clipboard"));
+        return "";
+    }
+
+    // Line by line iteration
+    unsigned int line_count = 0;
+    size_t start = 0;
+    size_t line_end = 0;
+    size_t end = 0;
+
+    while (line_count < LINE_LIMIT && start < clipboard.length()) {
+        // Find next line
+        while ((end = clipboard.find('\n', start)) - start < 3) {
+            start = end + 1;  // Special case: Blank line
+        }
+
+        if ((end = clipboard.find('\n', start)) == std::string::npos) {
+            end = clipboard.length();  // Special case: One long line
+        }
+
+        if (end > 0 && clipboard[end - 1] == '\r') {
+            line_end = end - 1;  // Windows style end symbol '\r'
+        } else {
+            line_end = end;
+        }
+
+        std::string line = clipboard.substr(start, line_end - start);
+        addToTrigramProfile(line, profile);
+
+        line_count++;
+        start = end + 1;  // Move past the newline
+    }
+
+    normalizeTrigramProfile(profile);
+
+    for (auto languageProfile : languages) {
+        temp_cosine = getCosineSimilarity(profile, languageProfile.trigramProfile);
+        if (temp_cosine > max_cosine) {
+            max_cosine = temp_cosine;
+            max_cosine_name = languageProfile.languageCode;
+        }
+    }
+
+    return max_cosine_name;
 }
