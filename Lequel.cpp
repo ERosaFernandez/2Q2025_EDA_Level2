@@ -15,7 +15,7 @@
 #include <iostream>
 #include <locale>
 
-#define LINE_LIMIT 50
+#define LINE_LIMIT 100000
 
 using namespace std;
 
@@ -98,7 +98,7 @@ static void addToTrigramProfile(const std::string& text, TrigramProfile& profile
         // Extracts trigram
         if (char_count == 3) {
             trigram.assign(text, trigram_start, text_position - trigram_start);
-            profile[trigram]++;
+            profile[trigram].real++;
 
             // Resets starting from the second position
             text_position = trigram_next;
@@ -116,7 +116,8 @@ void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
     // Sums the squares of the trigram frequencies
     float sumSquares = 0.0f;
     for (auto& element : trigramProfile) {
-        sumSquares += element.second * element.second;
+        element.second.normalized = element.second.real;
+        sumSquares += element.second.normalized * element.second.normalized;
     }
 
     // Calculates the L2 norm
@@ -127,8 +128,16 @@ void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
     const float invNorm = 1.0f / norm;
 
     // Normalizes each trigram frequency by dividing by the norm
-    for (auto& element : trigramProfile) {
-        element.second *= invNorm;
+    // for (auto& element : trigramProfile) {
+    //     element.second *= invNorm;
+    //     if (element.second < 0.25F)
+    // }
+
+    // Normalizes each trigram frequency by dividing by the norm
+    auto iterator = trigramProfile.begin();
+    while (iterator != trigramProfile.end()) {
+        iterator->second.normalized *= invNorm;
+        iterator++;
     }
 }
 
@@ -139,7 +148,9 @@ void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
  * @param languageProfile The language trigram profile
  * @return float The cosine similarity score
  */
-float getCosineSimilarity(TrigramProfile& textProfile, TrigramProfile& languageProfile) {
+float getCosineSimilarity(TrigramProfile& textProfile,
+                          TrigramProfile& languageProfile,
+                          settings_t& globalSettings) {
     const size_t text_size = textProfile.size();
     const size_t lang_size = languageProfile.size();
 
@@ -151,19 +162,101 @@ float getCosineSimilarity(TrigramProfile& textProfile, TrigramProfile& languageP
     float dotProduct = 0.0f;
 
     // Computes dot product by iterating over the smaller profile
-    if (text_size <= lang_size) {
-        for (const auto& entry : textProfile) {
-            const auto it = languageProfile.find(entry.first);
-            dotProduct += (it != languageProfile.end()) ? entry.second * it->second : 0.0f;
+    if (globalSettings.valueProcessingSetting == VALUE_NORMALIZE) {
+        if (text_size <= lang_size) {
+            for (const auto& entry : textProfile) {
+                const auto it = languageProfile.find(entry.first);
+                dotProduct += (it != languageProfile.end())
+                                  ? entry.second.normalized * it->second.normalized
+                                  : 0.0f;
+            }
+        } else {
+            for (const auto& entry : languageProfile) {
+                const auto it = textProfile.find(entry.first);
+                dotProduct += (it != textProfile.end())
+                                  ? entry.second.normalized * it->second.normalized
+                                  : 0.0f;
+            }
         }
     } else {
-        for (const auto& entry : languageProfile) {
-            const auto it = textProfile.find(entry.first);
-            dotProduct += (it != textProfile.end()) ? entry.second * it->second : 0.0f;
+        if (text_size <= lang_size) {
+            for (const auto& entry : textProfile) {
+                const auto it = languageProfile.find(entry.first);
+                dotProduct +=
+                    (it != languageProfile.end()) ? entry.second.real * it->second.real : 0.0f;
+            }
+        } else {
+            for (const auto& entry : languageProfile) {
+                const auto it = textProfile.find(entry.first);
+                dotProduct +=
+                    (it != textProfile.end()) ? entry.second.real * it->second.real : 0.0f;
+            }
         }
     }
 
     return dotProduct;
+}
+
+static float getJaccardSimilarity(TrigramProfile& profile,
+                                  TrigramProfile& language,
+                                  settings_t& globalSettings) {
+    float in_common = 0;
+    float total = 0;
+
+    auto profile_iterator = profile.begin();
+    auto language_iterator = language.begin();
+
+    if (globalSettings.valueProcessingSetting == VALUE_NORMALIZE) {
+        while (profile_iterator != profile.end()) {
+            language_iterator = language.find(profile_iterator->first);
+            if (language_iterator != language.end()) {
+                in_common += std::min(profile_iterator->second.normalized,
+                                      language_iterator->second.normalized);
+            }
+            total += profile_iterator->second.normalized;
+            profile_iterator++;
+        }
+
+        for (language_iterator = language.begin(); language_iterator != language.end();
+             language_iterator++) {
+            total += language_iterator->second.normalized;
+        }
+    } else {
+        while (profile_iterator != profile.end()) {
+            language_iterator = language.find(profile_iterator->first);
+            if (language_iterator != language.end()) {
+                in_common +=
+                    std::min(profile_iterator->second.real, language_iterator->second.real);
+            }
+            total += profile_iterator->second.real;
+            profile_iterator++;
+        }
+
+        for (language_iterator = language.begin(); language_iterator != language.end();
+             language_iterator++) {
+            total += language_iterator->second.real;
+        }
+    }
+
+    return in_common / (total - in_common);
+}
+
+static float getCavnarTrenkleSimilarity(TrigramProfile& profile,
+                                        TrigramProfile& language,
+                                        settings_t& globalSettings) {
+    float totalDistance = 0.0f;
+
+    // Calculates |profileNormalValue - languageNormalValue|
+    for (auto& input : profile) {
+        auto iterator = language.find(input.first);
+        if (iterator != language.end()) {
+            totalDistance += std::abs(input.second.normalized - iterator->second.normalized);
+        } else
+            totalDistance += 1.0f;
+    }
+
+    // Convert distance to similarity
+    return 1.0f / (1.0f + totalDistance);
 }
 
 /**
@@ -179,6 +272,51 @@ string identifyLanguage(const Text& text, LanguageProfiles& languages) {
     return "";  // Fill-in result here
 }
 
+static std::string compareLanguages(TrigramProfile& profile,
+                                    LanguageProfiles& languages,
+                                    settings_t& globalSettings) {
+    float max_value = 0;
+    float temp_value = 0;
+    std::string max_value_name;
+
+    switch (globalSettings.algorithmSetting) {
+        case ALGORITHM_JACCARD:
+            for (auto languageProfile : languages) {
+                temp_value =
+                    getJaccardSimilarity(profile, languageProfile.trigramProfile, globalSettings);
+                if (temp_value > max_value) {
+                    max_value = temp_value;
+                    max_value_name = languageProfile.languageCode;
+                }
+            }
+            break;
+        case ALGORITHM_CAVNARTRENKLE:
+            for (auto languageProfile : languages) {
+                temp_value = getCavnarTrenkleSimilarity(
+                    profile, languageProfile.trigramProfile, globalSettings);
+                if (temp_value > max_value) {
+                    max_value = temp_value;
+                    max_value_name = languageProfile.languageCode;
+                }
+            }
+            break;
+        case ALGORITHM_COSINE:
+            for (auto languageProfile : languages) {
+                temp_value =
+                    getCosineSimilarity(profile, languageProfile.trigramProfile, globalSettings);
+                if (temp_value > max_value) {
+                    max_value = temp_value;
+                    max_value_name = languageProfile.languageCode;
+                }
+            }
+            break;
+        default:
+            return "";
+    }
+
+    return max_value_name;
+}
+
 /**
  * @name identifyLanguageFromPath
  * @brief Identifies the language of a text given the file path;
@@ -187,37 +325,32 @@ string identifyLanguage(const Text& text, LanguageProfiles& languages) {
  * @param languages A list of Language objects
  * @return string The language code of the most likely language
  */
-std::string identifyLanguageFromPath(char* path, LanguageProfiles& languages) {
+std::string identifyLanguageFromPath(char* path,
+                                     LanguageProfiles& languages,
+                                     settings_t& globalSettings) {
     std::ifstream file(path);
     std::string extractedText;
     TrigramProfile profile;
 
-    float max_cosine = 0;
-    float temp_cosine = 0;
-    std::string max_cosine_name;
-    // wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    // float max_value = 0;
+    // float temp_value = 0;
+    // std::string max_value_name;
 
     if (!file.is_open()) {
         perror(("Error while opening file " + std::string(path)).c_str());
         return "";
     }
 
-    for (int counter = 0; (counter < LINE_LIMIT) && (std::getline(file, extractedText));
+    for (int counter = 0; (counter < globalSettings.lineLimit) && (std::getline(file, extractedText));
          counter++) {
         addToTrigramProfile(extractedText, profile);
     }
 
-    normalizeTrigramProfile(profile);
-
-    for (auto languageProfile : languages) {
-        temp_cosine = getCosineSimilarity(profile, languageProfile.trigramProfile);
-        if (temp_cosine > max_cosine) {
-            max_cosine = temp_cosine;
-            max_cosine_name = languageProfile.languageCode;
-        }
+    if (globalSettings.valueProcessingSetting == VALUE_NORMALIZE) {
+        normalizeTrigramProfile(profile);
     }
 
-    return max_cosine_name;
+    return compareLanguages(profile, languages, globalSettings);
 }
 
 /**
@@ -228,13 +361,15 @@ std::string identifyLanguageFromPath(char* path, LanguageProfiles& languages) {
  * @param languages A list of Language objects
  * @return string The language code of the most likely language
  */
-std::string identifyLanguageFromClipboard(std::string& clipboard, LanguageProfiles& languages) {
+std::string identifyLanguageFromClipboard(std::string& clipboard,
+                                          LanguageProfiles& languages,
+                                          settings_t& globalSettings) {
     std::string extractedText;
     TrigramProfile profile;
 
-    float max_cosine = 0;
-    float temp_cosine = 0;
-    std::string max_cosine_name;
+    // float max_value = 0;
+    // float temp_value = 0;
+    // std::string max_value_name;
 
     // Special case: empty clipboard
     if (clipboard.empty()) {
@@ -248,12 +383,8 @@ std::string identifyLanguageFromClipboard(std::string& clipboard, LanguageProfil
     size_t line_end = 0;
     size_t end = 0;
 
-    while (line_count < LINE_LIMIT && start < clipboard.length()) {
+    while (line_count < globalSettings.lineLimit && start < clipboard.length()) {
         // Find next line
-        while ((end = clipboard.find('\n', start)) - start < 3) {
-            start = end + 1;  // Special case: Blank line
-        }
-
         if ((end = clipboard.find('\n', start)) == std::string::npos) {
             end = clipboard.length();  // Special case: One long line
         }
@@ -271,15 +402,9 @@ std::string identifyLanguageFromClipboard(std::string& clipboard, LanguageProfil
         start = end + 1;  // Move past the newline
     }
 
-    normalizeTrigramProfile(profile);
-
-    for (auto languageProfile : languages) {
-        temp_cosine = getCosineSimilarity(profile, languageProfile.trigramProfile);
-        if (temp_cosine > max_cosine) {
-            max_cosine = temp_cosine;
-            max_cosine_name = languageProfile.languageCode;
-        }
+    if (globalSettings.valueProcessingSetting == VALUE_NORMALIZE) {
+        normalizeTrigramProfile(profile);
     }
 
-    return max_cosine_name;
+    return compareLanguages(profile, languages, globalSettings);
 }
