@@ -37,6 +37,7 @@ struct settings_t {
 };
 
 // TrigramProfile: map of trigram -> frequency
+// Swapped map for unordered_map
 typedef std::unordered_map<std::string, value_t> TrigramProfile;
 
 // TrigramList: list of trigrams

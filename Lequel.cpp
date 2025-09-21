@@ -6,6 +6,16 @@
  *
  * @cite
  * https://towardsdatascience.com/understanding-cosine-similarity-and-its-application-fd42f585296a
+ *
+ * @cite
+ * https://www.geeksforgeeks.org/python/jaccard-similarity/
+ * https://rpubs.com/lgadar/weighted-jaccard
+ * info about Jaccard similarity
+ *
+ * @cite
+ * https://dsacl3-2019.github.io/materials/CavnarTrenkle.pdf
+ * https://www.let.rug.nl/vannoord/TextCat/textcat.pdf
+ * info about Cavnar Trenkle similarity
  */
 
 #include "Lequel.h"
@@ -15,37 +25,7 @@
 #include <iostream>
 #include <locale>
 
-#define LINE_LIMIT 100000
-
 using namespace std;
-
-// ============ UNUSED =============//
-
-/**
- * @brief Builds a trigram profile from a given text.
- *
- * @param text Vector of lines (Text)
- * @return TrigramProfile The trigram profile
- */
-TrigramProfile buildTrigramProfile(const Text& text) {
-    wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-
-    // Your code goes here...
-    for (auto line : text) {
-        if ((line.length() > 0) && (line[line.length() - 1] == '\r'))
-            line = line.substr(0, line.length() - 1);
-    }
-
-    // Tip: converts UTF-8 string to wstring
-    // wstring unicodeString = converter.from_bytes(textLine);
-
-    // Tip: convert wstring to UTF-8 string
-    // string trigram = converter.to_bytes(unicodeTrigram);
-
-    return TrigramProfile();  // Fill-in result here
-}
-
-// ==================================//
 
 /**
  * @name addToTrigramProfile
@@ -81,6 +61,7 @@ static void addToTrigramProfile(const std::string& text, TrigramProfile& profile
 
         // Identifies UTF-8 character length
         // KNOWN ISSUE: It never expects a middle byte
+        // SOLUTION: Never send a middle byte :)
         unsigned char character = text[text_position];
         if (!(character & 0b10000000)) {
             text_position += 1;  // 1 Byte
@@ -91,7 +72,6 @@ static void addToTrigramProfile(const std::string& text, TrigramProfile& profile
         } else {
             text_position += 4;  // 4 Bytes
         }
-        // text_position += (byte < 0x80) ? 1 : (byte < 0xE0) ? 2 : (byte < 0xF0) ? 3 : 4;
 
         char_count++;
 
@@ -128,12 +108,6 @@ void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
     const float invNorm = 1.0f / norm;
 
     // Normalizes each trigram frequency by dividing by the norm
-    // for (auto& element : trigramProfile) {
-    //     element.second *= invNorm;
-    //     if (element.second < 0.25F)
-    // }
-
-    // Normalizes each trigram frequency by dividing by the norm
     auto iterator = trigramProfile.begin();
     while (iterator != trigramProfile.end()) {
         iterator->second.normalized *= invNorm;
@@ -142,11 +116,13 @@ void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
 }
 
 /**
+ * @name getCosineSimilarity
  * @brief Calculates the cosine similarity between two trigram profiles
  *
  * @param textProfile The text trigram profile
  * @param languageProfile The language trigram profile
- * @return float The cosine similarity score
+ * @param globalSettings The struct containing all the settings data
+ * @return The cosine similarity score
  */
 float getCosineSimilarity(TrigramProfile& textProfile,
                           TrigramProfile& languageProfile,
@@ -162,41 +138,36 @@ float getCosineSimilarity(TrigramProfile& textProfile,
     float dotProduct = 0.0f;
 
     // Computes dot product by iterating over the smaller profile
-    if (globalSettings.valueProcessingSetting == VALUE_NORMALIZE) {
-        if (text_size <= lang_size) {
-            for (const auto& entry : textProfile) {
-                const auto it = languageProfile.find(entry.first);
-                dotProduct += (it != languageProfile.end())
-                                  ? entry.second.normalized * it->second.normalized
-                                  : 0.0f;
-            }
-        } else {
-            for (const auto& entry : languageProfile) {
-                const auto it = textProfile.find(entry.first);
-                dotProduct += (it != textProfile.end())
-                                  ? entry.second.normalized * it->second.normalized
-                                  : 0.0f;
-            }
+    if (text_size <= lang_size) {
+        for (const auto& entry : textProfile) {
+            const auto it = languageProfile.find(entry.first);
+            dotProduct += (it != languageProfile.end())
+                              ? entry.second.normalized * it->second.normalized
+                              : 0.0f;
         }
     } else {
-        if (text_size <= lang_size) {
-            for (const auto& entry : textProfile) {
-                const auto it = languageProfile.find(entry.first);
-                dotProduct +=
-                    (it != languageProfile.end()) ? entry.second.real * it->second.real : 0.0f;
-            }
-        } else {
-            for (const auto& entry : languageProfile) {
-                const auto it = textProfile.find(entry.first);
-                dotProduct +=
-                    (it != textProfile.end()) ? entry.second.real * it->second.real : 0.0f;
-            }
+        for (const auto& entry : languageProfile) {
+            const auto it = textProfile.find(entry.first);
+            dotProduct +=
+                (it != textProfile.end()) ? entry.second.normalized * it->second.normalized : 0.0f;
         }
     }
 
     return dotProduct;
 }
 
+/**
+ * @name getJaccardSimilarity
+ * @brief Calculates the Jaccard similarity between two trigram profiles.
+ * More info about Jaccard similarity:
+ * https://www.geeksforgeeks.org/python/jaccard-similarity/
+ * https://rpubs.com/lgadar/weighted-jaccard
+ *
+ * @param textProfile The text trigram profile
+ * @param languageProfile The language trigram profile
+ * @param globalSettings The struct containing all the settings data
+ * @return The Jaccard similarity score
+ */
 static float getJaccardSimilarity(TrigramProfile& profile,
                                   TrigramProfile& language,
                                   settings_t& globalSettings) {
@@ -206,6 +177,7 @@ static float getJaccardSimilarity(TrigramProfile& profile,
     auto profile_iterator = profile.begin();
     auto language_iterator = language.begin();
 
+    //Calculates the amount of elements in common, then the elements in total
     if (globalSettings.valueProcessingSetting == VALUE_NORMALIZE) {
         while (profile_iterator != profile.end()) {
             language_iterator = language.find(profile_iterator->first);
@@ -238,21 +210,44 @@ static float getJaccardSimilarity(TrigramProfile& profile,
         }
     }
 
+    // Intersection divided by the union
     return in_common / (total - in_common);
 }
 
+/**
+ * @name getCavnarTrenkleSimilarity
+ * @brief Calculates the Cavnar Trenkle similarity between two trigram profiles.
+ * More info about Cavnar Trenkle similarity:
+ * https://dsacl3-2019.github.io/materials/CavnarTrenkle.pdf
+ * https://www.let.rug.nl/vannoord/TextCat/textcat.pdf
+ *
+ * @param textProfile The text trigram profile
+ * @param languageProfile The language trigram profile
+ * @param globalSettings The struct containing all the settings data
+ * @return The Cavnar Trenkle similarity score
+ */
 static float getCavnarTrenkleSimilarity(TrigramProfile& profile,
                                         TrigramProfile& language,
                                         settings_t& globalSettings) {
     float totalDistance = 0.0f;
 
     // Calculates |profileNormalValue - languageNormalValue|
-    for (auto& input : profile) {
-        auto iterator = language.find(input.first);
-        if (iterator != language.end()) {
-            totalDistance += std::abs(input.second.normalized - iterator->second.normalized);
-        } else
-            totalDistance += 1.0f;
+    if (globalSettings.valueProcessingSetting == VALUE_NORMALIZE) {
+        for (auto& input : profile) {
+            auto iterator = language.find(input.first);
+            if (iterator != language.end()) {
+                totalDistance += std::abs(input.second.normalized - iterator->second.normalized);
+            } else
+                totalDistance += 1.0f;
+        }
+    } else {
+        for (auto& input : profile) {
+            auto iterator = language.find(input.first);
+            if (iterator != language.end()) {
+                totalDistance += std::abs(input.second.real - iterator->second.real);
+            } else
+                totalDistance += 1.0f;
+        }
     }
 
     // Convert distance to similarity
@@ -260,18 +255,14 @@ static float getCavnarTrenkleSimilarity(TrigramProfile& profile,
 }
 
 /**
+ * @name compareLanguages
  * @brief Identifies the language of a text.
  *
- * @param text A Text (vector of lines)
+ * @param profile The profile created from the extracted text
  * @param languages A list of Language objects
- * @return string The language code of the most likely language
+ * @param globalSettings The struct containing all the settings data
+ * @return The language code of the most likely language
  */
-string identifyLanguage(const Text& text, LanguageProfiles& languages) {
-    // Your code goes here...
-
-    return "";  // Fill-in result here
-}
-
 static std::string compareLanguages(TrigramProfile& profile,
                                     LanguageProfiles& languages,
                                     settings_t& globalSettings) {
@@ -323,7 +314,8 @@ static std::string compareLanguages(TrigramProfile& profile,
  *
  * @param path string of characters for the file path
  * @param languages A list of Language objects
- * @return string The language code of the most likely language
+ * @param globalSettings The struct containing all the settings data
+ * @return The language code of the most likely language
  */
 std::string identifyLanguageFromPath(char* path,
                                      LanguageProfiles& languages,
@@ -332,16 +324,13 @@ std::string identifyLanguageFromPath(char* path,
     std::string extractedText;
     TrigramProfile profile;
 
-    // float max_value = 0;
-    // float temp_value = 0;
-    // std::string max_value_name;
-
     if (!file.is_open()) {
         perror(("Error while opening file " + std::string(path)).c_str());
         return "";
     }
 
-    for (int counter = 0; (counter < globalSettings.lineLimit) && (std::getline(file, extractedText));
+    for (int counter = 0;
+         (counter < globalSettings.lineLimit) && (std::getline(file, extractedText));
          counter++) {
         addToTrigramProfile(extractedText, profile);
     }
@@ -359,17 +348,14 @@ std::string identifyLanguageFromPath(char* path,
  *
  * @param path string of characters from the clipboard
  * @param languages A list of Language objects
- * @return string The language code of the most likely language
+ * @param globalSettings The struct containing all the settings data
+ * @return The language code of the most likely language
  */
 std::string identifyLanguageFromClipboard(std::string& clipboard,
                                           LanguageProfiles& languages,
                                           settings_t& globalSettings) {
     std::string extractedText;
     TrigramProfile profile;
-
-    // float max_value = 0;
-    // float temp_value = 0;
-    // std::string max_value_name;
 
     // Special case: empty clipboard
     if (clipboard.empty()) {

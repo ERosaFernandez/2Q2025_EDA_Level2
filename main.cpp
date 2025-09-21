@@ -86,12 +86,24 @@ bool loadLanguagesData(unordered_map<string, string>& languageCodeNames,
     return true;
 }
 
+/**
+ * @name timestamp_millis
+ * @brief Returns the number of milliseconds since the program started, similar to Arduino's
+ * millis().
+ * @return Current timestamp in milliseconds as a long long.
+ */
 unsigned long long timestamp_millis() {
     auto now = std::chrono::steady_clock::now();
     auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     return ms.time_since_epoch().count();
 }
 
+/**
+ * @name setupButtons
+ * @brief Sets the position, height and width for all buttons
+ *
+ * @param buttons The struct containing all button data
+ */
 void setupButtons(buttons_t& buttons) {
     buttons.algoCavnarTrenkle.y = 130;
     buttons.algoCosine.y = buttons.algoCavnarTrenkle.y;
@@ -126,6 +138,13 @@ void setupButtons(buttons_t& buttons) {
     buttons.lineLimit.x = buttons.toggleNormalize.x + buttons.toggleNormalize.width + 150;
 }
 
+/**
+ * @name drawButtons
+ * @brief Draws the buttons
+ *
+ * @param buttons The struct containing all button data
+ * @param globalSettings The struct containing all the settings data
+ */
 void drawButtons(buttons_t& buttons, settings_t& globalSettings) {
     Color CavTrenkle;
     Color Cosine;
@@ -204,6 +223,7 @@ void drawButtons(buttons_t& buttons, settings_t& globalSettings) {
 }
 
 int main(int, char*[]) {
+    // Swapped map for unordered_map
     unordered_map<string, string> languageCodeNames;
     LanguageProfiles languages;
 
