@@ -256,9 +256,9 @@ int main(int, char*[]) {
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_V) && (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL) ||
                                     IsKeyDown(KEY_LEFT_SUPER) || IsKeyDown(KEY_RIGHT_SUPER))) {
-            timer_start = timestamp_millis();
-            std::string clipboard = GetClipboardText();
 
+            std::string clipboard = GetClipboardText();
+            timer_start = timestamp_millis();
             languageCode = identifyLanguageFromClipboard(clipboard, languages, globalSettings);
             timer_end = timestamp_millis();
         }

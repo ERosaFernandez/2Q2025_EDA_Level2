@@ -49,6 +49,8 @@ static void addToTrigramProfile(const std::string& text, TrigramProfile& profile
     unsigned short int trigram_next = 0;
     unsigned short int text_position = 0;
 
+    unsigned char character;
+
     while (text_position < text.length()) {
         // Saves first position of the trigram
         if (char_count == 0) {
@@ -62,7 +64,7 @@ static void addToTrigramProfile(const std::string& text, TrigramProfile& profile
         // Identifies UTF-8 character length
         // KNOWN ISSUE: It never expects a middle byte
         // SOLUTION: Never send a middle byte :)
-        unsigned char character = text[text_position];
+        character = text[text_position];
         if (!(character & 0b10000000)) {
             text_position += 1;  // 1 Byte
         } else if ((character & 0b11100000) == 0b11000000) {
@@ -95,9 +97,17 @@ static void addToTrigramProfile(const std::string& text, TrigramProfile& profile
 void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
     // Sums the squares of the trigram frequencies
     float sumSquares = 0.0f;
-    for (auto& element : trigramProfile) {
-        element.second.normalized = element.second.real;
-        sumSquares += element.second.normalized * element.second.normalized;
+
+    auto trigramIterator = trigramProfile.begin();
+
+    // for (auto& element : trigramProfile) {
+    //     element.second.normalized = element.second.real;
+    //     sumSquares += element.second.normalized * element.second.normalized;
+    // }
+    while (trigramIterator != trigramProfile.end()) {
+        trigramIterator->second.normalized = trigramIterator->second.real;
+        sumSquares += trigramIterator->second.normalized * trigramIterator->second.normalized;
+        trigramIterator++;
     }
 
     // Calculates the L2 norm
@@ -108,10 +118,10 @@ void normalizeTrigramProfile(TrigramProfile& trigramProfile) {
     const float invNorm = 1.0f / norm;
 
     // Normalizes each trigram frequency by dividing by the norm
-    auto iterator = trigramProfile.begin();
-    while (iterator != trigramProfile.end()) {
-        iterator->second.normalized *= invNorm;
-        iterator++;
+    trigramIterator = trigramProfile.begin();
+    while (trigramIterator != trigramProfile.end()) {
+        trigramIterator->second.normalized *= invNorm;
+        trigramIterator++;
     }
 }
 
@@ -138,18 +148,40 @@ float getCosineSimilarity(TrigramProfile& textProfile,
     float dotProduct = 0.0f;
 
     // Computes dot product by iterating over the smaller profile
+    auto textIterator = textProfile.begin();
+    auto languageIterator = languageProfile.begin();
     if (text_size <= lang_size) {
-        for (const auto& entry : textProfile) {
-            const auto it = languageProfile.find(entry.first);
-            dotProduct += (it != languageProfile.end())
-                              ? entry.second.normalized * it->second.normalized
-                              : 0.0f;
+        // for (const auto& entry : textProfile) {
+        //     const auto it = languageProfile.find(entry.first);
+        //     dotProduct += (it != languageProfile.end())
+        //                       ? entry.second.normalized * it->second.normalized
+        //                       : 0.0f;
+        // }
+        while (textIterator != textProfile.end()) {
+            languageIterator = languageProfile.find(textIterator->first);
+            if (languageIterator != languageProfile.end())
+                dotProduct += textIterator->second.normalized * textIterator->second.normalized;
+            textIterator++;
+            //     dotProduct += (it != languageProfile.end())
+            //                       ? entry.second.normalized * it->second.normalized
+            //                       : 0.0f;
         }
     } else {
-        for (const auto& entry : languageProfile) {
-            const auto it = textProfile.find(entry.first);
-            dotProduct +=
-                (it != textProfile.end()) ? entry.second.normalized * it->second.normalized : 0.0f;
+        // for (const auto& entry : languageProfile) {
+        //     const auto it = textProfile.find(entry.first);
+        //     dotProduct +=
+        //         (it != textProfile.end()) ? entry.second.normalized * it->second.normalized :
+        //         0.0f;
+        // }
+        while (languageIterator != languageProfile.end()) {
+            textIterator = textProfile.find(languageIterator->first);
+            if (textIterator != textProfile.end())
+                dotProduct +=
+                    languageIterator->second.normalized * languageIterator->second.normalized;
+            languageIterator++;
+            //     dotProduct += (it != languageProfile.end())
+            //                       ? entry.second.normalized * it->second.normalized
+            //                       : 0.0f;
         }
     }
 
@@ -177,7 +209,7 @@ static float getJaccardSimilarity(TrigramProfile& profile,
     auto profile_iterator = profile.begin();
     auto language_iterator = language.begin();
 
-    //Calculates the amount of elements in common, then the elements in total
+    // Calculates the amount of elements in common, then the elements in total
     if (globalSettings.valueProcessingSetting == VALUE_NORMALIZE) {
         while (profile_iterator != profile.end()) {
             language_iterator = language.find(profile_iterator->first);
@@ -231,22 +263,43 @@ static float getCavnarTrenkleSimilarity(TrigramProfile& profile,
                                         settings_t& globalSettings) {
     float totalDistance = 0.0f;
 
+    auto profileIterator = profile.begin();
+    auto languageIterator = language.begin();
+
     // Calculates |profileNormalValue - languageNormalValue|
     if (globalSettings.valueProcessingSetting == VALUE_NORMALIZE) {
-        for (auto& input : profile) {
-            auto iterator = language.find(input.first);
-            if (iterator != language.end()) {
-                totalDistance += std::abs(input.second.normalized - iterator->second.normalized);
+        // for (auto& input : profile) {
+        //     auto iterator = language.find(input.first);
+        //     if (iterator != language.end()) {
+        //         totalDistance += std::abs(input.second.normalized - iterator->second.normalized);
+        //     } else
+        //         totalDistance += 1.0f;
+        // }
+        while (profileIterator != profile.end()) {
+            languageIterator = language.find(profileIterator->first);
+            if (languageIterator != language.end()) {
+                totalDistance += std::abs(profileIterator->second.normalized -
+                                          languageIterator->second.normalized);
             } else
                 totalDistance += 1.0f;
+            profileIterator++;
         }
     } else {
-        for (auto& input : profile) {
-            auto iterator = language.find(input.first);
-            if (iterator != language.end()) {
-                totalDistance += std::abs(input.second.real - iterator->second.real);
+        // for (auto& input : profile) {
+        //     auto iterator = language.find(input.first);
+        //     if (iterator != language.end()) {
+        //         totalDistance += std::abs(input.second.real - iterator->second.real);
+        //     } else
+        //         totalDistance += 1.0f;
+        // }
+        while (profileIterator != profile.end()) {
+            languageIterator = language.find(profileIterator->first);
+            if (languageIterator != language.end()) {
+                totalDistance +=
+                    std::abs(profileIterator->second.real - languageIterator->second.real);
             } else
                 totalDistance += 1.0f;
+            profileIterator++;
         }
     }
 
@@ -268,44 +321,74 @@ static std::string compareLanguages(TrigramProfile& profile,
                                     settings_t& globalSettings) {
     float max_value = 0;
     float temp_value = 0;
-    std::string max_value_name;
+    std::string* max_value_name;
+
+    auto languageIterator = languages.begin();
 
     switch (globalSettings.algorithmSetting) {
         case ALGORITHM_JACCARD:
-            for (auto languageProfile : languages) {
+            // for (auto &languageProfile : languages) {
+            //     temp_value =
+            //         getJaccardSimilarity(profile, languageProfile.trigramProfile,
+            //         globalSettings);
+            //     if (temp_value > max_value) {
+            //         max_value = temp_value;
+            //         max_value_name = &languageProfile.languageCode;
+            //     }
+            // }
+            while (languageIterator != languages.end()) {
                 temp_value =
-                    getJaccardSimilarity(profile, languageProfile.trigramProfile, globalSettings);
+                    getJaccardSimilarity(profile, languageIterator->trigramProfile, globalSettings);
                 if (temp_value > max_value) {
                     max_value = temp_value;
-                    max_value_name = languageProfile.languageCode;
+                    max_value_name = &languageIterator->languageCode;
                 }
+                languageIterator++;
             }
             break;
         case ALGORITHM_CAVNARTRENKLE:
-            for (auto languageProfile : languages) {
+            // for (auto &languageProfile : languages) {
+            //     temp_value = getCavnarTrenkleSimilarity(
+            //         profile, languageProfile.trigramProfile, globalSettings);
+            //     if (temp_value > max_value) {
+            //         max_value = temp_value;
+            //         max_value_name = &languageProfile.languageCode;
+            //     }
+            // }
+            while (languageIterator != languages.end()) {
                 temp_value = getCavnarTrenkleSimilarity(
-                    profile, languageProfile.trigramProfile, globalSettings);
+                    profile, languageIterator->trigramProfile, globalSettings);
                 if (temp_value > max_value) {
                     max_value = temp_value;
-                    max_value_name = languageProfile.languageCode;
+                    max_value_name = &languageIterator->languageCode;
                 }
+                languageIterator++;
             }
             break;
         case ALGORITHM_COSINE:
-            for (auto languageProfile : languages) {
+            // for (auto &languageProfile : languages) {
+            //     temp_value =
+            //         getCosineSimilarity(profile, languageProfile.trigramProfile, globalSettings);
+            //     if (temp_value > max_value) {
+            //         max_value = temp_value;
+            //         max_value_name = &languageProfile.languageCode;
+            //     }
+            // }
+            while (languageIterator != languages.end()) {
                 temp_value =
-                    getCosineSimilarity(profile, languageProfile.trigramProfile, globalSettings);
+                    getCosineSimilarity(profile, languageIterator->trigramProfile, globalSettings);
                 if (temp_value > max_value) {
                     max_value = temp_value;
-                    max_value_name = languageProfile.languageCode;
+                    max_value_name = &languageIterator->languageCode;
                 }
+                languageIterator++;
             }
             break;
         default:
             return "";
     }
 
-    return max_value_name;
+    return *max_value_name;
 }
 
 /**
@@ -354,8 +437,14 @@ std::string identifyLanguageFromPath(char* path,
 std::string identifyLanguageFromClipboard(std::string& clipboard,
                                           LanguageProfiles& languages,
                                           settings_t& globalSettings) {
-    std::string extractedText;
-    TrigramProfile profile;
+    static std::string extractedText;
+    static TrigramProfile profile;
+
+    // Should avoid constant reallocations
+    profile.reserve(5000);
+    extractedText.reserve(500);
+    profile.clear();
+    extractedText.clear();
 
     // Special case: empty clipboard
     if (clipboard.empty()) {
