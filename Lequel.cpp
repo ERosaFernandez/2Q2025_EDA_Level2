@@ -33,7 +33,7 @@ using namespace std;
  *
  * @param text String of UTF-8 Characters
  */
-static void addToTrigramProfile(const std::string& text, TrigramProfile& profile) {
+void addToTrigramProfile(const std::string& text, TrigramProfile& profile) {
     if (text.length() < 3)
         return;
 

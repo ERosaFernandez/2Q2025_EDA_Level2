@@ -1,0 +1,2430 @@
+import csv
+
+# ===================== CLASES =====================
+class Libro:
+    def __init__(self, titulo, autor, anio, isbn):
+        self.titulo = titulo
+        self.autor = autor
+        self.anio = anio
+        self.isbn = isbn
+        self.disponible = True
+
+    def mostrar_info(self):
+        estado = "Disponible" if self.disponible else "Prestado"
+        print(f"{self.titulo} | {self.autor} | {self.anio} | ISBN: {self.isbn} | {estado}")
+
+
+class Usuario:
+    def __init__(self, nombre, id_usuario):
+        self.nombre = nombre
+        self.id = id_usuario
+        self.libros_prestados = []
+
+    def mostrar_info(self):
+        print(f"Usuario: {self.nombre} | ID: {self.id}")
+        if self.libros_prestados:
+            print("Libros prestados:", ", ".join(self.libros_prestados))
+        else:
+            print("Libros prestados: Ninguno")
+
+
+# ===================== BIBLIOTECA =====================
+class Biblioteca:
+    def __init__(self):
+        self.catalogo = {}   # clave: ISBN -> Libro
+        self.usuarios = {}   # clave: ID -> Usuario
+
+    def agregar_libro(self, titulo, autor, anio, isbn):
+        if isbn in self.catalogo:
+            print("El libro ya existe en el catálogo.")
+            return
+        self.catalogo[isbn] = Libro(titulo, autor, anio, isbn)
+
+    def agregar_usuario(self, nombre, id_usuario):
+        if id_usuario in self.usuarios:
+            print("El usuario ya existe.")
+            return
+        self.usuarios[id_usuario] = Usuario(nombre, id_usuario)
+
+    def prestar_libro(self, id_usuario, isbn):
+        if id_usuario not in self.usuarios:
+            print("Usuario no encontrado.")
+            return
+        if isbn not in self.catalogo:
+            print("Libro no encontrado.")
+            return
+
+        libro = self.catalogo[isbn]
+        usuario = self.usuarios[id_usuario]
+
+        if not libro.disponible:
+            print("El libro ya está prestado.")
+            return
+
+        libro.disponible = False
+        usuario.libros_prestados.append(libro.titulo)
+        print(f"Libro '{libro.titulo}' prestado a {usuario.nombre}.")
+
+    def devolver_libro(self, id_usuario, isbn):
+        if id_usuario not in self.usuarios or isbn not in self.catalogo:
+            print("Usuario o libro no encontrado.")
+            return
+
+        libro = self.catalogo[isbn]
+        usuario = self.usuarios[id_usuario]
+
+        if libro.titulo in usuario.libros_prestados:
+            usuario.libros_prestados.remove(libro.titulo)
+            libro.disponible = True
+            print(f"Libro '{libro.titulo}' devuelto por {usuario.nombre}.")
+        else:
+            print("Este libro no estaba prestado por el usuario.")
+
+    def mostrar_catalogo(self):
+        print("\n--- Catálogo de Libros ---")
+        for libro in self.catalogo.values():
+            libro.mostrar_info()
+
+    def mostrar_usuarios(self):
+        print("\n--- Usuarios ---")
+        for usuario in self.usuarios.values():
+            usuario.mostrar_info()
+
+    def guardar_datos(self, file_libros="libros.csv", file_usuarios="usuarios.csv"):
+        # Guardar libros
+        with open(file_libros, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            for libro in self.catalogo.values():
+                writer.writerow([libro.titulo, libro.autor, libro.anio, libro.isbn, libro.disponible])
+
+        # Guardar usuarios
+        with open(file_usuarios, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            for usuario in self.usuarios.values():
+                writer.writerow([usuario.nombre, usuario.id] + usuario.libros_prestados)
+
+        print("Datos guardados en archivos CSV.")
+
+
+# ===================== MAIN =====================
+if __name__ == "__main__":
+    bib = Biblioteca()
+
+    # Agregar libros
+    bib.agregar_libro("Cien Años de Soledad", "Gabriel García Márquez", 1967, "ISBN001")
+    bib.agregar_libro("Don Quijote", "Miguel de Cervantes", 1605, "ISBN002")
+    bib.agregar_libro("El Principito", "Antoine de Saint-Exupéry", 1943, "ISBN003")
+
+    # Agregar usuarios
+    bib.agregar_usuario("Ana", 101)
+    bib.agregar_usuario("Luis", 102)
+
+    bib.mostrar_catalogo()
+    bib.mostrar_usuarios()
+
+    # Prestamos
+    bib.prestar_libro(101, "ISBN001")
+    bib.prestar_libro(102, "ISBN003")
+
+    bib.mostrar_catalogo()
+    bib.mostrar_usuarios()
+
+    # Devoluciones
+    bib.devolver_libro(101, "ISBN001")
+    bib.mostrar_catalogo()
+    bib.mostrar_usuarios()
+
+    # Guardar datos
+    bib.guardar_datos()
+
+
+    #!/usr/bin/env python3
+"""
+CÓDIGO INTEGRAL DE PYTHON
+Demostración completa de todas las funcionalidades del lenguaje Python
+Incluye: POO, Funciones, Módulos, Decoradores, Context Managers, Threading, etc.
+"""
+
+import sys
+import os
+import re
+import json
+import csv
+import xml.etree.ElementTree as ET
+import sqlite3
+import pickle
+import gzip
+import zipfile
+import tarfile
+import urllib.request
+import urllib.parse
+import http.client
+import smtplib
+import socket
+import threading
+import multiprocessing
+import concurrent.futures
+import asyncio
+import time
+import datetime
+import calendar
+import random
+import math
+import statistics
+import collections
+import itertools
+import functools
+import operator
+import heapq
+import bisect
+import copy
+import weakref
+import gc
+import traceback
+import logging
+import argparse
+import configparser
+import tempfile
+import shutil
+import glob
+import pathlib
+from typing import List, Dict, Set, Tuple, Optional, Union, Any, Callable, Generator
+from dataclasses import dataclass, field
+from enum import Enum, IntEnum, Flag, IntFlag, auto
+from abc import ABC, abstractmethod
+from contextlib import contextmanager, closing
+from collections import namedtuple, defaultdict, Counter, ChainMap, deque
+from functools import lru_cache, partial, reduce, wraps, singledispatch
+from itertools import chain, combinations, permutations, product, cycle, count, repeat
+from operator import add, mul, sub, truediv, floordiv, mod, pow as op_pow
+from decimal import Decimal, getcontext
+from fractions import Fraction
+from uuid import uuid4
+from hashlib import md5, sha1, sha256, sha512
+from base64 import b64encode, b64decode
+from urllib.parse import urlparse, urljoin, quote, unquote
+import warnings
+import inspect
+import types
+import ctypes
+
+# ==================== VARIABLES GLOBALES Y CONSTANTES ====================
+PI = math.pi
+E = math.e
+GOLDEN_RATIO = (1 + math.sqrt(5)) / 2
+
+# Variables de diferentes tipos
+integer_var = 42
+float_var = 3.14159
+string_var = "Hello, Python!"
+boolean_var = True
+none_var = None
+bytes_var = b"Binary data"
+bytearray_var = bytearray(b"Mutable binary")
+
+# Estructuras de datos básicas
+list_var = [1, 2, 3, 4, 5]
+tuple_var = (1, 2, 3, 4, 5)
+set_var = {1, 2, 3, 4, 5}
+frozenset_var = frozenset({1, 2, 3, 4, 5})
+dict_var = {"a": 1, "b": 2, "c": 3}
+
+# ==================== ENUMS Y CLASES DE DATOS ====================
+class Color(Enum):
+    RED = 1
+    GREEN = 2
+    BLUE = 3
+    YELLOW = 4
+
+class Status(IntEnum):
+    INACTIVE = 0
+    ACTIVE = 1
+    PENDING = 2
+    COMPLETED = 3
+
+class Permission(Flag):
+    READ = auto()
+    WRITE = auto()
+    EXECUTE = auto()
+
+class Priority(IntFlag):
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 4
+    URGENT = 8
+
+@dataclass
+class Point2D:
+    x: float
+    y: float
+    
+    def distance_from_origin(self) -> float:
+        return math.sqrt(self.x**2 + self.y**2)
+    
+    def __add__(self, other: 'Point2D') -> 'Point2D':
+        return Point2D(self.x + other.x, self.y + other.y)
+    
+    def __str__(self) -> str:
+        return f"Point2D({self.x}, {self.y})"
+
+@dataclass
+class Person:
+    name: str
+    age: int
+    email: str = ""
+    hobbies: List[str] = field(default_factory=list)
+    
+    def __post_init__(self):
+        if self.age < 0:
+            raise ValueError("Age cannot be negative")
+
+# Named tuple
+Point3D = namedtuple('Point3D', ['x', 'y', 'z'])
+
+# ==================== CLASES BASE Y HERENCIA ====================
+class Animal(ABC):
+    """Clase abstracta base para animales"""
+    
+    def __init__(self, name: str, species: str):
+        self.name = name
+        self.species = species
+        self._energy = 100
+    
+    @abstractmethod
+    def make_sound(self) -> str:
+        pass
+    
+    @abstractmethod
+    def move(self) -> str:
+        pass
+    
+    def eat(self, food: str) -> str:
+        self._energy += 10
+        return f"{self.name} eats {food} and gains energy"
+    
+    def sleep(self) -> str:
+        self._energy = 100
+        return f"{self.name} sleeps and recovers energy"
+    
+    @property
+    def energy(self) -> int:
+        return self._energy
+    
+    @energy.setter
+    def energy(self, value: int):
+        if 0 <= value <= 100:
+            self._energy = value
+        else:
+            raise ValueError("Energy must be between 0 and 100")
+    
+    def __str__(self) -> str:
+        return f"{self.name} the {self.species}"
+    
+    def __repr__(self) -> str:
+        return f"Animal(name='{self.name}', species='{self.species}')"
+
+class Dog(Animal):
+    """Clase Dog que hereda de Animal"""
+    
+    def __init__(self, name: str, breed: str):
+        super().__init__(name, "Dog")
+        self.breed = breed
+        self.tricks = []
+    
+    def make_sound(self) -> str:
+        return f"{self.name} says: Woof! Woof!"
+    
+    def move(self) -> str:
+        return f"{self.name} runs around playfully"
+    
+    def learn_trick(self, trick: str) -> str:
+        self.tricks.append(trick)
+        return f"{self.name} learned to {trick}"
+    
+    def perform_trick(self, trick: str) -> str:
+        if trick in self.tricks:
+            return f"{self.name} performs {trick}!"
+        else:
+            return f"{self.name} doesn't know how to {trick}"
+
+class Cat(Animal):
+    """Clase Cat que hereda de Animal"""
+    
+    def __init__(self, name: str, indoor: bool = True):
+        super().__init__(name, "Cat")
+        self.indoor = indoor
+        self.lives = 9
+    
+    def make_sound(self) -> str:
+        return f"{self.name} says: Meow!"
+    
+    def move(self) -> str:
+        return f"{self.name} gracefully walks around"
+    
+    def hunt(self) -> str:
+        if not self.indoor:
+            return f"{self.name} goes hunting outside"
+        else:
+            return f"{self.name} hunts toys inside the house"
+
+class Bird(Animal):
+    """Clase Bird que hereda de Animal"""
+    
+    def __init__(self, name: str, can_fly: bool = True):
+        super().__init__(name, "Bird")
+        self.can_fly = can_fly
+    
+    def make_sound(self) -> str:
+        return f"{self.name} says: Tweet! Tweet!"
+    
+    def move(self) -> str:
+        if self.can_fly:
+            return f"{self.name} flies in the sky"
+        else:
+            return f"{self.name} walks on the ground"
+
+# ==================== MÚLTIPLE HERENCIA ====================
+class Flyable:
+    """Mixin para objetos que pueden volar"""
+    
+    def fly(self) -> str:
+        return "Flying high in the sky!"
+    
+    def land(self) -> str:
+        return "Landing safely on the ground!"
+
+class Swimmable:
+    """Mixin para objetos que pueden nadar"""
+    
+    def swim(self) -> str:
+        return "Swimming gracefully in the water!"
+    
+    def dive(self) -> str:
+        return "Diving deep underwater!"
+
+class Duck(Animal, Flyable, Swimmable):
+    """Duck que puede volar y nadar"""
+    
+    def __init__(self, name: str):
+        super().__init__(name, "Duck")
+    
+    def make_sound(self) -> str:
+        return f"{self.name} says: Quack! Quack!"
+    
+    def move(self) -> str:
+        return f"{self.name} waddles around"
+
+# ==================== METACLASES ====================
+class SingletonMeta(type):
+    """Metaclase para implementar el patrón Singleton"""
+    _instances = {}
+    
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class DatabaseConnection(metaclass=SingletonMeta):
+    """Conexión a base de datos singleton"""
+    
+    def __init__(self):
+        self.connection_string = "sqlite:///:memory:"
+        self.is_connected = False
+    
+    def connect(self):
+        if not self.is_connected:
+            print(f"Connecting to database: {self.connection_string}")
+            self.is_connected = True
+        else:
+            print("Already connected to database")
+    
+    def disconnect(self):
+        if self.is_connected:
+            print("Disconnecting from database")
+            self.is_connected = False
+        else:
+            print("Not connected to database")
+
+# ==================== DESCRIPTORES ====================
+class Validator:
+    """Descriptor para validación de atributos"""
+    
+    def __init__(self, min_value: int = 0, max_value: int = 100):
+        self.min_value = min_value
+        self.max_value = max_value
+    
+    def __set_name__(self, owner, name):
+        self.name = name
+        self.private_name = f'_{name}'
+    
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return getattr(instance, self.private_name, 0)
+    
+    def __set__(self, instance, value):
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"{self.name} must be a number")
+        if not (self.min_value <= value <= self.max_value):
+            raise ValueError(f"{self.name} must be between {self.min_value} and {self.max_value}")
+        setattr(instance, self.private_name, value)
+
+class Student:
+    """Clase que usa descriptores para validación"""
+    
+    grade = Validator(0, 100)
+    age = Validator(5, 120)
+    
+    def __init__(self, name: str, age: int, grade: float):
+        self.name = name
+        self.age = age
+        self.grade = grade
+    
+    def __str__(self):
+        return f"Student(name='{self.name}', age={self.age}, grade={self.grade})"
+
+# ==================== DECORADORES ====================
+def timer(func):
+    """Decorador para medir tiempo de ejecución"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} took {end_time - start_time:.4f} seconds")
+        return result
+    return wrapper
+
+def retry(max_attempts: int = 3, delay: float = 1.0):
+    """Decorador para reintentar función en caso de error"""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            for attempt in range(max_attempts):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    last_exception = e
+                    if attempt < max_attempts - 1:
+                        print(f"Attempt {attempt + 1} failed: {e}. Retrying in {delay} seconds...")
+                        time.sleep(delay)
+                    else:
+                        print(f"All {max_attempts} attempts failed")
+            raise last_exception
+        return wrapper
+    return decorator
+
+def memoize(func):
+    """Decorador para memoización (caché de resultados)"""
+    cache = {}
+    
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Crear clave para el cache
+        key = str(args) + str(sorted(kwargs.items()))
+        if key not in cache:
+            cache[key] = func(*args, **kwargs)
+            print(f"Result cached for {func.__name__}")
+        else:
+            print(f"Result retrieved from cache for {func.__name__}")
+        return cache[key]
+    return wrapper
+
+# Decorador de clase
+def add_methods(cls):
+    """Decorador que añade métodos a una clase"""
+    def to_json(self):
+        return json.dumps(self.__dict__)
+    
+    def from_json(cls, json_str):
+        data = json.loads(json_str)
+        return cls(**data)
+    
+    cls.to_json = to_json
+    cls.from_json = classmethod(from_json)
+    return cls
+
+# ==================== CONTEXT MANAGERS ====================
+@contextmanager
+def timer_context(name: str):
+    """Context manager para medir tiempo"""
+    print(f"Starting {name}...")
+    start_time = time.time()
+    try:
+        yield
+    finally:
+        end_time = time.time()
+        print(f"{name} completed in {end_time - start_time:.4f} seconds")
+
+class FileManager:
+    """Context manager personalizado para archivos"""
+    
+    def __init__(self, filename: str, mode: str = 'r'):
+        self.filename = filename
+        self.mode = mode
+        self.file = None
+    
+    def __enter__(self):
+        print(f"Opening file: {self.filename}")
+        self.file = open(self.filename, self.mode)
+        return self.file
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.file:
+            print(f"Closing file: {self.filename}")
+            self.file.close()
+        if exc_type:
+            print(f"Exception occurred: {exc_type.__name__}: {exc_value}")
+        return False
+
+class DatabaseTransaction:
+    """Context manager para transacciones de base de datos"""
+    
+    def __init__(self, connection):
+        self.connection = connection
+        self.transaction_started = False
+    
+    def __enter__(self):
+        print("Starting database transaction")
+        self.connection.execute("BEGIN TRANSACTION")
+        self.transaction_started = True
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.transaction_started:
+            if exc_type is None:
+                print("Committing transaction")
+                self.connection.execute("COMMIT")
+            else:
+                print(f"Rolling back transaction due to: {exc_type.__name__}")
+                self.connection.execute("ROLLBACK")
+        return False
+
+# ==================== GENERADORES E ITERADORES ====================
+def fibonacci(n: int) -> Generator[int, None, None]:
+    """Generador de números de Fibonacci"""
+    a, b = 0, 1
+    count = 0
+    while count < n:
+        yield a
+        a, b = b, a + b
+        count += 1
+
+def prime_numbers(limit: int) -> Generator[int, None, None]:
+    """Generador de números primos hasta un límite"""
+    def is_prime(num):
+        if num < 2:
+            return False
+        for i in range(2, int(num ** 0.5) + 1):
+            if num % i == 0:
+                return False
+        return True
+    
+    for num in range(2, limit + 1):
+        if is_prime(num):
+            yield num
+
+class CountDown:
+    """Iterador personalizado para cuenta regresiva"""
+    
+    def __init__(self, start: int):
+        self.start = start
+        self.current = start
+    
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if self.current <= 0:
+            raise StopIteration
+        self.current -= 1
+        return self.current + 1
+
+def infinite_sequence():
+    """Generador infinito"""
+    num = 0
+    while True:
+        yield num
+        num += 1
+
+# ==================== FUNCIONES LAMBDA Y FUNCIONALES ====================
+# Lambdas básicas
+square = lambda x: x ** 2
+add_numbers = lambda x, y: x + y
+is_even = lambda x: x % 2 == 0
+capitalize_words = lambda s: ' '.join(word.capitalize() for word in s.split())
+
+# Funciones de orden superior
+def apply_operation(func: Callable, *args) -> Any:
+    """Aplica una función a los argumentos dados"""
+    return func(*args)
+
+def compose(*functions):
+    """Compone múltiples funciones"""
+    return reduce(lambda f, g: lambda x: f(g(x)), functions, lambda x: x)
+
+def curry(func):
+    """Convierte una función en su versión currificada"""
+    @wraps(func)
+    def curried(*args, **kwargs):
+        if len(args) + len(kwargs) >= func.__code__.co_argcount:
+            return func(*args, **kwargs)
+        return lambda *more_args, **more_kwargs: curried(*(args + more_args), **{**kwargs, **more_kwargs})
+    return curried
+
+# ==================== MANEJO DE EXCEPCIONES ====================
+class CustomError(Exception):
+    """Excepción personalizada"""
+    def __init__(self, message: str, error_code: int = 0):
+        super().__init__(message)
+        self.error_code = error_code
+        self.timestamp = datetime.datetime.now()
+    
+    def __str__(self):
+        return f"CustomError({self.error_code}): {super().__str__()} at {self.timestamp}"
+
+class ValidationError(CustomError):
+    """Error de validación"""
+    def __init__(self, field: str, value: Any, message: str = ""):
+        self.field = field
+        self.value = value
+        super().__init__(message or f"Invalid value for {field}: {value}", 400)
+
+def risky_operation(value: int) -> int:
+    """Función que puede lanzar diferentes excepciones"""
+    if value < 0:
+        raise ValueError("Value cannot be negative")
+    elif value == 0:
+        raise ZeroDivisionError("Cannot divide by zero")
+    elif value > 100:
+        raise CustomError("Value too large", 413)
+    else:
+        return 100 // value
+
+# ==================== THREADING Y CONCURRENCIA ====================
+class ThreadSafeCounter:
+    """Contador thread-safe"""
+    
+    def __init__(self):
+        self._value = 0
+        self._lock = threading.Lock()
+        self._condition = threading.Condition(self._lock)
+    
+    def increment(self):
+        with self._lock:
+            self._value += 1
+            self._condition.notify_all()
+    
+    def decrement(self):
+        with self._lock:
+            self._value -= 1
+            self._condition.notify_all()
+    
+    def get_value(self):
+        with self._lock:
+            return self._value
+    
+    def wait_for_value(self, target: int, timeout: float = None):
+        with self._condition:
+            return self._condition.wait_for(lambda: self._value == target, timeout)
+
+def worker_thread(name: str, counter: ThreadSafeCounter, iterations: int):
+    """Función para threads workers"""
+    print(f"Thread {name} starting")
+    for i in range(iterations):
+        counter.increment()
+        print(f"Thread {name}: iteration {i+1}, counter = {counter.get_value()}")
+        time.sleep(0.1)
+    print(f"Thread {name} finished")
+
+# ==================== PROGRAMACIÓN ASÍNCRONA ====================
+async def async_factorial(n: int) -> int:
+    """Cálculo asíncrono de factorial"""
+    if n <= 1:
+        return 1
+    
+    print(f"Computing factorial of {n}")
+    await asyncio.sleep(0.1)  # Simular trabajo asíncrono
+    
+    result = 1
+    for i in range(2, n + 1):
+        result *= i
+        if i % 10 == 0:  # Yield control ocasionalmente
+            await asyncio.sleep(0.01)
+    
+    return result
+
+async def async_download_simulation(url: str, delay: float) -> str:
+    """Simula descarga asíncrona"""
+    print(f"Starting download from {url}")
+    await asyncio.sleep(delay)
+    print(f"Download from {url} completed")
+    return f"Data from {url}"
+
+async def async_producer(queue: asyncio.Queue, num_items: int):
+    """Productor asíncrono"""
+    for i in range(num_items):
+        item = f"item_{i}"
+        await queue.put(item)
+        print(f"Produced: {item}")
+        await asyncio.sleep(0.1)
+    
+    # Señal de finalización
+    await queue.put(None)
+
+async def async_consumer(name: str, queue: asyncio.Queue):
+    """Consumidor asíncrono"""
+    while True:
+        item = await queue.get()
+        if item is None:
+            await queue.put(None)  # Reenviar señal para otros consumidores
+            break
+        
+        print(f"Consumer {name} processing: {item}")
+        await asyncio.sleep(0.2)  # Simular procesamiento
+        queue.task_done()
+
+# ==================== MANIPULACIÓN DE ARCHIVOS ====================
+def create_sample_files():
+    """Crea archivos de ejemplo para demostraciones"""
+    
+    # Archivo de texto
+    with open('sample.txt', 'w') as f:
+        f.write("This is a sample text file.\n")
+        f.write("It contains multiple lines.\n")
+        f.write("Each line has different content.\n")
+    
+    # Archivo JSON
+    sample_data = {
+        "name": "John Doe",
+        "age": 30,
+        "city": "New York",
+        "hobbies": ["reading", "swimming", "cooking"],
+        "is_student": False
+    }
+    
+    with open('sample.json', 'w') as f:
+        json.dump(sample_data, f, indent=2)
+    
+    # Archivo CSV
+    with open('sample.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Name', 'Age', 'City', 'Salary'])
+        writer.writerow(['Alice', 25, 'Boston', 50000])
+        writer.writerow(['Bob', 30, 'Chicago', 60000])
+        writer.writerow(['Charlie', 35, 'Denver', 70000])
+    
+    # Archivo XML
+    root = ET.Element("employees")
+    
+    for name, age, dept in [("Alice", 25, "Engineering"), ("Bob", 30, "Marketing"), ("Charlie", 35, "Sales")]:
+        emp = ET.SubElement(root, "employee")
+        ET.SubElement(emp, "name").text = name
+        ET.SubElement(emp, "age").text = str(age)
+        ET.SubElement(emp, "department").text = dept
+    
+    tree = ET.ElementTree(root)
+    tree.write("sample.xml", encoding="utf-8", xml_declaration=True)
+
+def demonstrate_file_operations():
+    """Demuestra operaciones con archivos"""
+    print("\n=== FILE OPERATIONS DEMO ===")
+    
+    create_sample_files()
+    
+    # Lectura de archivo de texto
+    print("Reading text file:")
+    with open('sample.txt', 'r') as f:
+        content = f.read()
+        print(content)
+    
+    # Lectura línea por línea
+    print("Reading line by line:")
+    with open('sample.txt', 'r') as f:
+        for i, line in enumerate(f, 1):
+            print(f"Line {i}: {line.strip()}")
+    
+    # Lectura de JSON
+    print("\nReading JSON file:")
+    with open('sample.json', 'r') as f:
+        data = json.load(f)
+        print(json.dumps(data, indent=2))
+    
+    # Lectura de CSV
+    print("\nReading CSV file:")
+    with open('sample.csv', 'r') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            print(dict(row))
+    
+    # Lectura de XML
+    print("\nReading XML file:")
+    tree = ET.parse('sample.xml')
+    root = tree.getroot()
+    
+    for emp in root.findall('employee'):
+        name = emp.find('name').text
+        age = emp.find('age').text
+        dept = emp.find('department').text
+        print(f"Employee: {name}, Age: {age}, Department: {dept}")
+    
+    # Uso de pathlib
+    print("\nUsing pathlib:")
+    current_dir = pathlib.Path.cwd()
+    print(f"Current directory: {current_dir}")
+    
+    for file_path in current_dir.glob("sample.*"):
+        print(f"File: {file_path.name}, Size: {file_path.stat().st_size} bytes")
+    
+    # Operaciones con directorios
+    temp_dir = pathlib.Path("temp_demo")
+    temp_dir.mkdir(exist_ok=True)
+    
+    # Copiar archivos
+    shutil.copy2("sample.txt", temp_dir / "copied_sample.txt")
+    
+    print(f"\nFiles in {temp_dir}:")
+    for file_path in temp_dir.iterdir():
+        print(f"  {file_path.name}")
+    
+    # Limpiar archivos temporales
+    shutil.rmtree(temp_dir)
+    
+    # Trabajar con archivos comprimidos
+    print("\nWorking with compressed files:")
+    
+    # ZIP
+    with zipfile.ZipFile('sample.zip', 'w') as zf:
+        zf.write('sample.txt')
+        zf.write('sample.json')
+        zf.write('sample.csv')
+    
+    with zipfile.ZipFile('sample.zip', 'r') as zf:
+        print("ZIP contents:", zf.namelist())
+    
+    # GZIP
+    with open('sample.txt', 'rb') as f_in:
+        with gzip.open('sample.txt.gz', 'wb') as f_out:
+            f_out.writelines(f_in)
+    
+    with gzip.open('sample.txt.gz', 'rt') as f:
+        compressed_content = f.read()
+        print("GZIP decompressed content preview:", compressed_content[:50] + "...")
+
+# ==================== BASES DE DATOS ====================
+def demonstrate_database_operations():
+    """Demuestra operaciones con bases de datos SQLite"""
+    print("\n=== DATABASE OPERATIONS DEMO ===")
+    
+    # Crear y conectar a la base de datos
+    conn = sqlite3.connect(':memory:')  # Base de datos en memoria
+    cursor = conn.cursor()
+    
+    # Crear tabla
+    cursor.execute('''
+        CREATE TABLE users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            age INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Insertar datos
+    users_data = [
+        ('Alice Johnson', 'alice@email.com', 28),
+        ('Bob Smith', 'bob@email.com', 32),
+        ('Charlie Brown', 'charlie@email.com', 25),
+        ('Diana Prince', 'diana@email.com', 29)
+    ]
+    
+    cursor.executemany('INSERT INTO users (name, email, age) VALUES (?, ?, ?)', users_data)
+    
+    # Confirmar cambios
+    conn.commit()
+    
+    print("Users inserted successfully!")
+    
+    # Consultar datos
+    print("\nAll users:")
+    cursor.execute('SELECT * FROM users')
+    for row in cursor.fetchall():
+        print(f"ID: {row[0]}, Name: {row[1]}, Email: {row[2]}, Age: {row[3]}")
+    
+    # Consulta con filtros
+    print("\nUsers older than 27:")
+    cursor.execute('SELECT name, age FROM users WHERE age > ?', (27,))
+    for row in cursor.fetchall():
+        print(f"Name: {row[0]}, Age: {row[1]}")
+    
+    # Actualizar datos
+    cursor.execute('UPDATE users SET age = age + 1 WHERE name = ?', ('Alice Johnson',))
+    conn.commit()
+    
+    print("\nAlice's age updated!")
+    
+    # Usar context manager para transacciones
+    try:
+        with DatabaseTransaction(conn):
+            cursor.execute('INSERT INTO users (name, email, age) VALUES (?, ?, ?)', 
+                         ('Eve Wilson', 'eve@email.com', 26))
+            cursor.execute('UPDATE users SET email = ? WHERE name = ?', 
+                         ('newemail@email.com', 'NonExistentUser'))
+    except sqlite3.Error as e:
+        print(f"Transaction failed: {e}")
+    
+    # Consulta final
+    print("\nFinal user count:")
+    cursor.execute('SELECT COUNT(*) FROM users')
+    count = cursor.fetchone()[0]
+    print(f"Total users: {count}")
+    
+    # Cerrar conexión
+    conn.close()
+
+# ==================== EXPRESIONES REGULARES ====================
+def demonstrate_regex_operations():
+    """Demuestra operaciones con expresiones regulares"""
+    print("\n=== REGEX OPERATIONS DEMO ===")
+    
+    text = """
+    Contact information:
+    John Doe: john.doe@email.com, phone: +1-555-123-4567
+    Jane Smith: jane.smith@company.org, phone: +1-555-987-6543
+    Bob Johnson: bob@domain.net, phone: 555.456.7890
+    Website: https://www.example.com
+    Date: 2023-12-25
+    Time: 14:30:45
+    """
+    
+    # Buscar emails
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    emails = re.findall(email_pattern, text)
+    print("Found emails:", emails)
+    
+    # Buscar números de teléfono
+    phone_pattern = r'(\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})'
+    phones = re.findall(phone_pattern, text)
+    print("Found phone numbers:")
+    for phone in phones:
+        clean_phone = ''.join(phone)
+        print(f"  {clean_phone}")
+    
+    # Buscar URLs
+    url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
+    urls = re.findall(url_pattern, text)
+    print("Found URLs:", urls)
+    
+    # Buscar fechas
+    date_pattern = r'\d{4}-\d{2}-\d{2}'
+    dates = re.findall(date_pattern, text)
+    print("Found dates:", dates)
+    
+    # Buscar horas
+    time_pattern = r'\d{2}:\d{2}:\d{2}'
+    times = re.findall(time_pattern, text)
+    print("Found times:", times)
+    
+    # Usar grupos nombrados
+    name_pattern = r'(?P<first_name>\w+)\s+(?P<last_name>\w+):'
+    matches = re.finditer(name_pattern, text)
+    print("Found names with groups:")
+    for match in matches:
+        print(f"  First: {match.group('first_name')}, Last: {match.group('last_name')}")
+    
+    # Sustitución con regex
+    censored_text = re.sub(email_pattern, '[EMAIL REMOVED]', text)
+    censored_text = re.sub(phone_pattern, '[PHONE REMOVED]', censored_text)
+    print("\nCensored text:")
+    print(censored_text[:200] + "...")
+    
+    # Dividir texto con regex
+    sentences = re.split(r'[.!?]+', text.strip())
+    print(f"\nText split into {len(sentences)} sentences")
+    for i, sentence in enumerate(sentences[:3], 1):
+        if sentence.strip():
+            print(f"Sentence {i}: {sentence.strip()}")
+
+# ==================== MANIPULACIÓN DE FECHAS Y TIEMPO ====================
+def demonstrate_datetime_operations():
+    """Demuestra operaciones con fechas y tiempo"""
+    print("\n=== DATETIME OPERATIONS DEMO ===")
+    
+    # Fecha y hora actual
+    now = datetime.datetime.now()
+    utc_now = datetime.datetime.utcnow()
+    
+    print(f"Current local time: {now}")
+    print(f"Current UTC time: {utc_now}")
+    
+    # Crear fechas específicas
+    birthday = datetime.date(1990, 5, 15)
+    meeting_time = datetime.time(14, 30, 0)
+    appointment = datetime.datetime(2024, 3, 15, 10, 30, 0)
+    
+    print(f"Birthday: {birthday}")
+    print(f"Meeting time: {meeting_time}")
+    print(f"Appointment: {appointment}")
+    
+    # Operaciones con fechas
+    today = datetime.date.today()
+    age_in_days = (today - birthday).days
+    age_in_years = age_in_days // 365
+    
+    print(f"Age in days: {age_in_days}")
+    print(f"Age in years (approx): {age_in_years}")
+    
+    # Formateo de fechas
+    print(f"Formatted date: {now.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Custom format: {now.strftime('%A, %B %d, %Y at %I:%M %p')}")
+    
+    # Parsing de fechas
+    date_string = "2023-12-25 15:30:45"
+    parsed_date = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+    print(f"Parsed date: {parsed_date}")
+    
+    # Trabajar con timedeltas
+    one_week = datetime.timedelta(weeks=1)
+    three_days = datetime.timedelta(days=3)
+    two_hours = datetime.timedelta(hours=2)
+    
+    future_date = now + one_week + three_days + two_hours
+    print(f"Future date: {future_date}")
+    
+    # Trabajar con calendario
+    print(f"\nCalendar for current month:")
+    current_month = calendar.month(now.year, now.month)
+    print(current_month)
+    
+    # Días de la semana
+    weekday = calendar.day_name[now.weekday()]
+    print(f"Today is: {weekday}")
+    
+    # Año bisiesto
+    is_leap = calendar.isleap(now.year)
+    print(f"Is {now.year} a leap year? {is_leap}")
+
+# ==================== OPERACIONES MATEMÁTICAS AVANZADAS ====================
+def demonstrate_advanced_math():
+    """Demuestra operaciones matemáticas avanzadas"""
+    print("\n=== ADVANCED MATH OPERATIONS DEMO ===")
+    
+    # Matemáticas básicas
+    numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    
+    print(f"Numbers: {numbers}")
+    print(f"Sum: {sum(numbers)}")
+    print(f"Max: {max(numbers)}")
+    print(f"Min: {min(numbers)}")
+    print(f"Length: {len(numbers)}")
+    
+    # Estadísticas
+    print(f"Mean: {statistics.mean(numbers)}")
+    print(f"Median: {statistics.median(numbers)}")
+    print(f"Mode: {statistics.mode([1, 1, 2, 2, 2, 3, 4])}")
+    print(f"Standard deviation: {statistics.stdev(numbers)}")
+    print(f"Variance: {statistics.variance(numbers)}")
+    
+    # Funciones matemáticas
+    x = 2.5
+    print(f"\nMath functions for x = {x}:")
+    print(f"sin(x) = {math.sin(x):.4f}")
+    print(f"cos(x) = {math.cos(x):.4f}")
+    print(f"tan(x) = {math.tan(x):.4f}")
+    print(f"log(x) = {math.log(x):.4f}")
+    print(f"log10(x) = {math.log10(x):.4f}")
+    print(f"exp(x) = {math.exp(x):.4f}")
+    print(f"sqrt(x) = {math.sqrt(x):.4f}")
+    print(f"ceil(x) = {math.ceil(x)}")
+    print(f"floor(x) = {math.floor(x)}")
+    print(f"factorial(5) = {math.factorial(5)}")
+    
+    # Números complejos
+    z1 = complex(3, 4)
+    z2 = complex(1, 2)
+    
+    print(f"\nComplex numbers:")
+    print(f"z1 = {z1}")
+    print(f"z2 = {z2}")
+    print(f"z1 + z2 = {z1 + z2}")
+    print(f"z1 * z2 = {z1 * z2}")
+    print(f"|z1| = {abs(z1):.4f}")
+    print(f"z1.conjugate() = {z1.conjugate()}")
+    
+    # Decimal para precisión alta
+    getcontext().prec = 50
+    d1 = Decimal('1.1')
+    d2 = Decimal('2.2')
+    
+    print(f"\nHigh precision decimal:")
+    print(f"1.1 + 2.2 = {d1 + d2}")  # Evita errores de punto flotante
+    print(f"1/3 with high precision = {Decimal('1') / Decimal('3')}")
+    
+    # Fracciones
+    f1 = Fraction(3, 4)
+    f2 = Fraction(1, 2)
+    
+    print(f"\nFractions:")
+    print(f"3/4 + 1/2 = {f1 + f2}")
+    print(f"3/4 * 1/2 = {f1 * f2}")
+    print(f"22/7 ≈ π = {Fraction(22, 7)} = {float(Fraction(22, 7)):.6f}")
+
+# ==================== ALGORITMOS Y ESTRUCTURAS DE DATOS ====================
+def demonstrate_algorithms():
+    """Demuestra algoritmos y estructuras de datos"""
+    print("\n=== ALGORITHMS AND DATA STRUCTURES DEMO ===")
+    
+    # Ordenamiento
+    data = [64, 34, 25, 12, 22, 11, 90]
+    print(f"Original data: {data}")
+    
+    # Bubble sort
+    def bubble_sort(arr):
+        n = len(arr)
+        for i in range(n):
+            for j in range(0, n - i - 1):
+                if arr[j] > arr[j + 1]:
+                    arr[j], arr[j + 1] = arr[j + 1], arr[j]
+        return arr
+    
+    bubble_sorted = bubble_sort(data.copy())
+    print(f"Bubble sorted: {bubble_sorted}")
+    
+    # Quick sort
+    def quick_sort(arr):
+        if len(arr) <= 1:
+            return arr
+        pivot = arr[len(arr) // 2]
+        left = [x for x in arr if x < pivot]
+        middle = [x for x in arr if x == pivot]
+        right = [x for x in arr if x > pivot]
+        return quick_sort(left) + middle + quick_sort(right)
+    
+    quick_sorted = quick_sort(data.copy())
+    print(f"Quick sorted: {quick_sorted}")
+    
+    # Búsqueda binaria
+    def binary_search(arr, target):
+        left, right = 0, len(arr) - 1
+        while left <= right:
+            mid = (left + right) // 2
+            if arr[mid] == target:
+                return mid
+            elif arr[mid] < target:
+                left = mid + 1
+            else:
+                right = mid - 1
+        return -1
+    
+    sorted_data = sorted(data)
+    target = 25
+    index = binary_search(sorted_data, target)
+    print(f"Binary search for {target} in {sorted_data}: index {index}")
+    
+    # Uso de heapq
+    heap_data = data.copy()
+    heapq.heapify(heap_data)
+    print(f"Heapified data: {heap_data}")
+    
+    smallest_three = heapq.nsmallest(3, data)
+    largest_three = heapq.nlargest(3, data)
+    print(f"3 smallest: {smallest_three}")
+    print(f"3 largest: {largest_three}")
+    
+    # Uso de bisect
+    sorted_list = [1, 3, 4, 4, 6, 8, 10]
+    insert_pos = bisect.bisect_left(sorted_list, 5)
+    print(f"Position to insert 5 in {sorted_list}: {insert_pos}")
+    
+    # Combinaciones y permutaciones
+    items = ['A', 'B', 'C']
+    print(f"\nCombinations and permutations of {items}:")
+    
+    # Permutaciones
+    perms = list(permutations(items, 2))
+    print(f"Permutations (2): {perms}")
+    
+    # Combinaciones
+    combs = list(combinations(items, 2))
+    print(f"Combinations (2): {combs}")
+    
+    # Producto cartesiano
+    product_result = list(product(items, repeat=2))
+    print(f"Cartesian product: {product_result}")
+    
+    # Uso de collections
+    print(f"\nCollections examples:")
+    
+    # Counter
+    text = "hello world"
+    char_count = Counter(text)
+    print(f"Character count in '{text}': {char_count}")
+    print(f"Most common 3: {char_count.most_common(3)}")
+    
+    # DefaultDict
+    word_index = defaultdict(list)
+    words = ["apple", "banana", "cherry", "apple", "date", "banana"]
+    for i, word in enumerate(words):
+        word_index[word].append(i)
+    
+    print(f"Word index: {dict(word_index)}")
+    
+    # Deque (double-ended queue)
+    dq = deque([1, 2, 3, 4, 5])
+    dq.appendleft(0)
+    dq.append(6)
+    print(f"Deque after operations: {list(dq)}")
+    
+    # ChainMap
+    dict1 = {'a': 1, 'b': 2}
+    dict2 = {'b': 3, 'c': 4}
+    chain = ChainMap(dict1, dict2)
+    print(f"ChainMap lookup 'b': {chain['b']}")  # Primera ocurrencia
+
+# ==================== PROGRAMACIÓN FUNCIONAL ====================
+def demonstrate_functional_programming():
+    """Demuestra programación funcional en Python"""
+    print("\n=== FUNCTIONAL PROGRAMMING DEMO ===")
+    
+    numbers = list(range(1, 11))
+    print(f"Numbers: {numbers}")
+    
+    # Map
+    squared = list(map(lambda x: x**2, numbers))
+    print(f"Squared: {squared}")
+    
+    # Filter
+    evens = list(filter(lambda x: x % 2 == 0, numbers))
+    print(f"Even numbers: {evens}")
+    
+    # Reduce
+    product = reduce(lambda x, y: x * y, numbers)
+    sum_all = reduce(lambda x, y: x + y, numbers)
+    print(f"Product of all: {product}")
+    print(f"Sum of all: {sum_all}")
+    
+    # Zip
+    letters = ['a', 'b', 'c', 'd', 'e']
+    pairs = list(zip(numbers[:5], letters))
+    print(f"Zipped pairs: {pairs}")
+    
+    # Enumerate
+    enumerated = list(enumerate(letters, start=1))
+    print(f"Enumerated: {enumerated}")
+    
+    # Any y All
+    print(f"Any even in [1,3,5,7]? {any(x % 2 == 0 for x in [1,3,5,7])}")
+    print(f"All positive in numbers? {all(x > 0 for x in numbers)}")
+    
+    # Funciones de orden superior personalizadas
+    @curry
+    def add_three_numbers(x, y, z):
+        return x + y + z
+    
+    add_5_and = add_three_numbers(5)
+    add_5_and_10 = add_5_and(10)
+    result = add_5_and_10(15)
+    print(f"Curried function result (5+10+15): {result}")
+    
+    # Composición de funciones
+    add_one = lambda x: x + 1
+    multiply_by_two = lambda x: x * 2
+    square = lambda x: x ** 2
+    
+    composed = compose(square, multiply_by_two, add_one)
+    result = composed(3)  # ((3 + 1) * 2) ** 2
+    print(f"Composed function result: {result}")
+    
+    # Partial application
+    multiply = lambda x, y: x * y
+    double = partial(multiply, 2)
+    triple = partial(multiply, 3)
+    
+    print(f"Partial application - double(5): {double(5)}")
+    print(f"Partial application - triple(5): {triple(5)}")
+    
+    # Uso de operator module
+    data = [1, 5, 3, 9, 2, 8, 4]
+    sum_op = reduce(add, data)
+    product_op = reduce(mul, data)
+    
+    print(f"Sum using operator.add: {sum_op}")
+    print(f"Product using operator.mul: {product_op}")
+
+# ==================== NETWORKING Y APIs ====================
+def demonstrate_networking():
+    """Demuestra operaciones de red (simuladas)"""
+    print("\n=== NETWORKING DEMO (Simulated) ===")
+    
+    # Parsing de URLs
+    url = "https://api.example.com/v1/users?page=2&limit=10#section1"
+    parsed = urlparse(url)
+    
+    print(f"Original URL: {url}")
+    print(f"Scheme: {parsed.scheme}")
+    print(f"Netloc: {parsed.netloc}")
+    print(f"Path: {parsed.path}")
+    print(f"Query: {parsed.query}")
+    print(f"Fragment: {parsed.fragment}")
+    
+    # Construcción de URLs
+    base_url = "https://api.example.com"
+    endpoint = "/v1/users"
+    full_url = urljoin(base_url, endpoint)
+    print(f"Joined URL: {full_url}")
+    
+    # Codificación de URLs
+    query_params = {"name": "John Doe", "city": "New York", "age": 30}
+    encoded_params = urllib.parse.urlencode(query_params)
+    print(f"Encoded parameters: {encoded_params}")
+    
+    # Simulación de request HTTP (sin hacer request real)
+    def simulate_http_request(method: str, url: str, data: dict = None):
+        print(f"Simulating {method} request to {url}")
+        if data:
+            print(f"Request data: {json.dumps(data, indent=2)}")
+        
+        # Simular respuesta
+        if "users" in url:
+            return {
+                "status": 200,
+                "data": [
+                    {"id": 1, "name": "John Doe", "email": "john@example.com"},
+                    {"id": 2, "name": "Jane Smith", "email": "jane@example.com"}
+                ]
+            }
+        else:
+            return {"status": 404, "error": "Not found"}
+    
+    response = simulate_http_request("GET", "https://api.example.com/v1/users")
+    print(f"Simulated response: {json.dumps(response, indent=2)}")
+    
+    # Simulación de cliente HTTP simple
+    class SimpleHTTPClient:
+        def __init__(self, base_url: str):
+            self.base_url = base_url
+            self.headers = {"User-Agent": "Python Simple Client"}
+        
+        def get(self, endpoint: str, params: dict = None):
+            url = urljoin(self.base_url, endpoint)
+            if params:
+                url += "?" + urllib.parse.urlencode(params)
+            return simulate_http_request("GET", url)
+        
+        def post(self, endpoint: str, data: dict = None):
+            url = urljoin(self.base_url, endpoint)
+            return simulate_http_request("POST", url, data)
+    
+    client = SimpleHTTPClient("https://api.example.com")
+    users = client.get("/v1/users", {"page": 1, "limit": 5})
+    print(f"Users from API: {json.dumps(users, indent=2)}")
+
+# ==================== LOGGING Y DEBUGGING ====================
+def demonstrate_logging():
+    """Demuestra sistema de logging"""
+    print("\n=== LOGGING DEMO ===")
+    
+    # Configuración de logging
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    logger = logging.getLogger(__name__)
+    
+    # Diferentes niveles de log
+    logger.debug("This is a debug message")
+    logger.info("This is an info message")
+    logger.warning("This is a warning message")
+    logger.error("This is an error message")
+    logger.critical("This is a critical message")
+    
+    # Logger con archivo
+    file_handler = logging.FileHandler('app.log')
+    file_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    
+    file_logger = logging.getLogger('file_logger')
+    file_logger.addHandler(file_handler)
+    file_logger.setLevel(logging.INFO)
+    
+    file_logger.info("This message goes to file")
+    print("Check app.log file for logged message")
+    
+    # Logging con exception info
+    try:
+        result = 10 / 0
+    except ZeroDivisionError:
+        logger.exception("Division by zero occurred")
+    
+    # Inspección de objetos
+    print("\n=== INSPECTION DEMO ===")
+    
+    def sample_function(a: int, b: str = "default") -> str:
+        """Sample function for inspection"""
+        return f"{a}: {b}"
+    
+    # Obtener información de la función
+    sig = inspect.signature(sample_function)
+    print(f"Function signature: {sig}")
+    
+    for param_name, param in sig.parameters.items():
+        print(f"Parameter: {param_name}, Type: {param.annotation}, Default: {param.default}")
+    
+    # Obtener código fuente
+    try:
+        source = inspect.getsource(sample_function)
+        print(f"Function source:\n{source}")
+    except OSError:
+        print("Source not available in this context")
+    
+    # Introspección de módulos
+    print(f"Current module: {__name__}")
+    print(f"Python version: {sys.version}")
+    print(f"Platform: {sys.platform}")
+    print(f"Path: {sys.path[:3]}...")  # Mostrar solo los primeros 3
+
+# ==================== TESTING (SIMULADO) ====================
+class SimpleTestFramework:
+    """Framework de testing simple"""
+    
+    def __init__(self):
+        self.tests_run = 0
+        self.tests_passed = 0
+        self.tests_failed = 0
+        self.failures = []
+    
+    def assert_equal(self, actual, expected, message=""):
+        self.tests_run += 1
+        if actual == expected:
+            self.tests_passed += 1
+            print(f"✓ Test passed: {message or f'{actual} == {expected}'}")
+        else:
+            self.tests_failed += 1
+            failure_msg = f"✗ Test failed: {message or f'{actual} != {expected}'}"
+            print(failure_msg)
+            self.failures.append(failure_msg)
+    
+    def assert_true(self, condition, message=""):
+        self.assert_equal(bool(condition), True, message or f"{condition} should be True")
+    
+    def assert_false(self, condition, message=""):
+        self.assert_equal(bool(condition), False, message or f"{condition} should be False")
+    
+    def assert_raises(self, exception_type, func, *args, **kwargs):
+        self.tests_run += 1
+        try:
+            func(*args, **kwargs)
+            self.tests_failed += 1
+            failure_msg = f"✗ Test failed: Expected {exception_type.__name__} but no exception was raised"
+            print(failure_msg)
+            self.failures.append(failure_msg)
+        except exception_type:
+            self.tests_passed += 1
+            print(f"✓ Test passed: {exception_type.__name__} raised as expected")
+        except Exception as e:
+            self.tests_failed += 1
+            failure_msg = f"✗ Test failed: Expected {exception_type.__name__} but got {type(e).__name__}"
+            print(failure_msg)
+            self.failures.append(failure_msg)
+    
+    def run_summary(self):
+        print(f"\n=== TEST SUMMARY ===")
+        print(f"Tests run: {self.tests_run}")
+        print(f"Tests passed: {self.tests_passed}")
+        print(f"Tests failed: {self.tests_failed}")
+        if self.failures:
+            print("Failures:")
+            for failure in self.failures:
+                print(f"  {failure}")
+
+def demonstrate_testing():
+    """Demuestra testing básico"""
+    print("\n=== TESTING DEMO ===")
+    
+    test = SimpleTestFramework()
+    
+    # Test matemáticas básicas
+    test.assert_equal(2 + 2, 4, "Basic addition")
+    test.assert_equal(10 / 2, 5, "Basic division")
+    test.assert_true(5 > 3, "Comparison test")
+    test.assert_false("" == "non-empty", "String comparison")
+    
+    # Test funciones propias
+    test.assert_equal(square(4), 16, "Square function test")
+    test.assert_equal(len(fibonacci(5)), 5, "Fibonacci generator length")
+    
+    # Test excepciones
+    test.assert_raises(ValueError, risky_operation, -5)
+    test.assert_raises(ZeroDivisionError, risky_operation, 0)
+    
+    # Test clases
+    dog = Dog("Buddy", "Golden Retriever")
+    test.assert_equal(dog.name, "Buddy", "Dog name test")
+    test.assert_equal(dog.species, "Dog", "Dog species test")
+    
+    student = Student("Alice", 20, 85.5)
+    test.assert_equal(student.name, "Alice", "Student name test")
+    test.assert_equal(student.age, 20, "Student age test")
+    
+    test.run_summary()
+
+# ==================== FUNCIONES PRINCIPALES DE DEMOSTRACIÓN ====================
+@timer
+@memoize
+def fibonacci_recursive(n: int) -> int:
+    """Fibonacci recursivo con memoización"""
+    if n <= 1:
+        return n
+    return fibonacci_recursive(n - 1) + fibonacci_recursive(n - 2)
+
+@retry(max_attempts=3, delay=0.5)
+def unreliable_function():
+    """Función que falla aleatoriamente para demostrar retry"""
+    if random.random() < 0.7:  # 70% de probabilidad de fallo
+        raise ConnectionError("Network error occurred")
+    return "Success!"
+
+def demonstrate_decorators():
+    """Demuestra el uso de decoradores"""
+    print("\n=== DECORATORS DEMO ===")
+    
+    # Decorador timer
+    print("Testing timer decorator:")
+    result = fibonacci_recursive(10)
+    print(f"Fibonacci(10) = {result}")
+    
+    # Llamar de nuevo para ver el cache
+    result = fibonacci_recursive(10)
+    print(f"Fibonacci(10) = {result} (from cache)")
+    
+    # Decorador retry
+    print("\nTesting retry decorator:")
+    try:
+        result = unreliable_function()
+        print(f"Function succeeded: {result}")
+    except Exception as e:
+        print(f"Function failed after retries: {e}")
+    
+    # Decorador de clase
+    @add_methods
+    class Product:
+        def __init__(self, name: str, price: float):
+            self.name = name
+            self.price = price
+    
+    product = Product("Laptop", 999.99)
+    json_str = product.to_json()
+    print(f"\nProduct as JSON: {json_str}")
+    
+    restored_product = Product.from_json(json_str)
+    print(f"Restored product: {restored_product.name}, ${restored_product.price}")
+
+def demonstrate_context_managers():
+    """Demuestra context managers"""
+    print("\n=== CONTEXT MANAGERS DEMO ===")
+    
+    # Context manager personalizado para timing
+    with timer_context("Complex calculation"):
+        result = sum(i**2 for i in range(1000))
+        time.sleep(0.1)  # Simular trabajo
+    
+    print(f"Calculation result: {result}")
+    
+    # Context manager para archivos
+    try:
+        with FileManager("test_file.txt", "w") as f:
+            f.write("Hello from context manager!\n")
+            f.write("This file will be closed automatically.\n")
+    except Exception as e:
+        print(f"File operation error: {e}")
+    
+    # Leer el archivo
+    try:
+        with FileManager("test_file.txt", "r") as f:
+            content = f.read()
+            print(f"File content:\n{content}")
+    except Exception as e:
+        print(f"File reading error: {e}")
+
+async def demonstrate_async_programming():
+    """Demuestra programación asíncrona"""
+    print("\n=== ASYNC PROGRAMMING DEMO ===")
+    
+    # Tareas asíncronas simples
+    print("Computing factorials asynchronously:")
+    tasks = []
+    for n in [5, 8, 10]:
+        task = asyncio.create_task(async_factorial(n))
+        tasks.append((n, task))
+    
+    for n, task in tasks:
+        result = await task
+        print(f"Factorial of {n}: {result}")
+    
+    # Descargas simultáneas simuladas
+    print("\nSimulating concurrent downloads:")
+    urls = [
+        "https://example.com/file1.txt",
+        "https://example.com/file2.txt",
+        "https://example.com/file3.txt"
+    ]
+    
+    download_tasks = [
+        async_download_simulation(url, random.uniform(0.5, 2.0)) 
+        for url in urls
+    ]
+    
+    results = await asyncio.gather(*download_tasks)
+    for result in results:
+        print(f"Downloaded: {result}")
+    
+    # Patrón productor-consumidor
+    print("\nProducer-Consumer pattern:")
+    queue = asyncio.Queue(maxsize=5)
+    
+    # Crear tareas
+    producer_task = asyncio.create_task(async_producer(queue, 10))
+    consumer_tasks = [
+        asyncio.create_task(async_consumer(f"Consumer-{i}", queue))
+        for i in range(3)
+    ]
+    
+    # Esperar que el productor termine
+    await producer_task
+    
+    # Esperar que todos los consumidores procesen los elementos
+    await asyncio.gather(*consumer_tasks)
+
+def demonstrate_multiprocessing():
+    """Demuestra multiprocesamiento"""
+    print("\n=== MULTIPROCESSING DEMO ===")
+    
+    def cpu_intensive_task(n):
+        """Tarea intensiva en CPU"""
+        result = 0
+        for i in range(n):
+            result += i ** 2
+        return result
+    
+    # Procesamiento secuencial
+    start_time = time.time()
+    sequential_results = []
+    for n in [100000, 200000, 300000]:
+        result = cpu_intensive_task(n)
+        sequential_results.append(result)
+    sequential_time = time.time() - start_time
+    print(f"Sequential processing took: {sequential_time:.4f} seconds")
+    print(f"Sequential results: {sequential_results}")
+    
+    # Procesamiento paralelo con ProcessPoolExecutor
+    start_time = time.time()
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = [executor.submit(cpu_intensive_task, n) for n in [100000, 200000, 300000]]
+        parallel_results = [future.result() for future in concurrent.futures.as_completed(futures)]
+    parallel_time = time.time() - start_time
+    
+    print(f"Parallel processing took: {parallel_time:.4f} seconds")
+    print(f"Parallel results: {parallel_results}")
+    print(f"Speedup: {sequential_time / parallel_time:.2f}x")
+
+def demonstrate_generators_and_iterators():
+    """Demuestra generadores e iteradores"""
+    print("\n=== GENERATORS AND ITERATORS DEMO ===")
+    
+    # Generador básico
+    print("Fibonacci sequence (first 10):")
+    for i, fib in enumerate(fibonacci(10)):
+        print(f"F({i}) = {fib}")
+    
+    # Generador de números primos
+    print("\nPrime numbers up to 50:")
+    primes = list(prime_numbers(50))
+    print(primes)
+    
+    # Iterador personalizado
+    print("\nCountdown iterator:")
+    countdown = CountDown(5)
+    for num in countdown:
+        print(f"T-{num}")
+    
+    # Generador infinito con islice
+    print("\nFirst 15 numbers from infinite sequence:")
+    infinite_gen = infinite_sequence()
+    first_15 = list(itertools.islice(infinite_gen, 15))
+    print(first_15)
+    
+    # Generator expressions
+    squares_gen = (x**2 for x in range(10))
+    print(f"Squares generator: {list(squares_gen)}")
+    
+    # Chaining generators
+    def even_numbers(limit):
+        for n in range(0, limit, 2):
+            yield n
+    
+    def odd_numbers(limit):
+        for n in range(1, limit, 2):
+            yield n
+    
+    chained = itertools.chain(even_numbers(10), odd_numbers(10))
+    print(f"Chained generators: {list(chained)}")
+    
+    # Uso avanzado de itertools
+    data = [1, 2, 3, 4, 5]
+    
+    # Cycle - repite infinitamente
+    cycled = itertools.cycle(data)
+    first_12_cycled = list(itertools.islice(cycled, 12))
+    print(f"Cycled data (12 items): {first_12_cycled}")
+    
+    # Accumulate - sumas acumulativas
+    accumulated = list(itertools.accumulate(data))
+    print(f"Accumulated sums: {accumulated}")
+    
+    # Groupby
+    data_with_keys = [('a', 1), ('a', 2), ('b', 3), ('b', 4), ('c', 5)]
+    grouped = {k: list(v) for k, v in itertools.groupby(data_with_keys, key=lambda x: x[0])}
+    print(f"Grouped data: {grouped}")
+
+def demonstrate_type_hints_and_annotations():
+    """Demuestra type hints y annotations"""
+    print("\n=== TYPE HINTS AND ANNOTATIONS DEMO ===")
+    
+    # Función con type hints completos
+    def process_user_data(
+        users: List[Dict[str, Union[str, int]]], 
+        filter_age: Optional[int] = None
+    ) -> Tuple[List[str], int]:
+        """
+        Procesa datos de usuarios y retorna nombres y cuenta total
+        
+        Args:
+            users: Lista de diccionarios con datos de usuario
+            filter_age: Edad mínima para filtrar (opcional)
+            
+        Returns:
+            Tupla con lista de nombres y cuenta total
+        """
+        if filter_age is not None:
+            filtered_users = [user for user in users if user.get('age', 0) >= filter_age]
+        else:
+            filtered_users = users
+        
+        names = [user['name'] for user in filtered_users]
+        return names, len(filtered_users)
+    
+    # Datos de prueba
+    sample_users = [
+        {'name': 'Alice', 'age': 25, 'city': 'New York'},
+        {'name': 'Bob', 'age': 30, 'city': 'San Francisco'},
+        {'name': 'Charlie', 'age': 22, 'city': 'Chicago'},
+        {'name': 'Diana', 'age': 28, 'city': 'Boston'}
+    ]
+    
+    names, count = process_user_data(sample_users, 25)
+    print(f"Users 25+: {names} (count: {count})")
+    
+    # Clase con type hints
+    class TypedCalculator:
+        def __init__(self, precision: int = 2) -> None:
+            self.precision = precision
+        
+        def add(self, a: Union[int, float], b: Union[int, float]) -> float:
+            return round(a + b, self.precision)
+        
+        def divide(self, a: Union[int, float], b: Union[int, float]) -> Optional[float]:
+            if b == 0:
+                return None
+            return round(a / b, self.precision)
+        
+        def calculate_batch(self, operations: List[Tuple[str, float, float]]) -> Dict[str, Any]:
+            results = {}
+            for op, x, y in operations:
+                if op == 'add':
+                    results[f"{x}+{y}"] = self.add(x, y)
+                elif op == 'divide':
+                    results[f"{x}/{y}"] = self.divide(x, y)
+            return results
+    
+    calc = TypedCalculator(precision=3)
+    batch_ops = [('add', 10.5, 5.2), ('divide', 15.0, 3.0), ('divide', 10.0, 0.0)]
+    results = calc.calculate_batch(batch_ops)
+    print(f"Calculator results: {results}")
+    
+    # Generic types
+    from typing import TypeVar, Generic
+    
+    T = TypeVar('T')
+    
+    class Stack(Generic[T]):
+        def __init__(self) -> None:
+            self._items: List[T] = []
+        
+        def push(self, item: T) -> None:
+            self._items.append(item)
+        
+        def pop(self) -> T:
+            if not self._items:
+                raise IndexError("Stack is empty")
+            return self._items.pop()
+        
+        def peek(self) -> T:
+            if not self._items:
+                raise IndexError("Stack is empty")
+            return self._items[-1]
+        
+        def is_empty(self) -> bool:
+            return len(self._items) == 0
+    
+    # Stack de enteros
+    int_stack: Stack[int] = Stack()
+    int_stack.push(1)
+    int_stack.push(2)
+    int_stack.push(3)
+    print(f"Integer stack top: {int_stack.peek()}")
+    
+    # Stack de strings
+    str_stack: Stack[str] = Stack()
+    str_stack.push("hello")
+    str_stack.push("world")
+    print(f"String stack top: {str_stack.peek()}")
+
+def demonstrate_advanced_oop():
+    """Demuestra características avanzadas de POO"""
+    print("\n=== ADVANCED OOP DEMO ===")
+    
+    # Demostrar herencia múltiple y MRO
+    duck = Duck("Donald")
+    print(f"Duck MRO: {Duck.__mro__}")
+    print(f"{duck.name}: {duck.make_sound()}")
+    print(f"{duck.name}: {duck.fly()}")
+    print(f"{duck.name}: {duck.swim()}")
+    
+    # Demostrar metaclase singleton
+    db1 = DatabaseConnection()
+    db2 = DatabaseConnection()
+    print(f"Same database instance? {db1 is db2}")
+    
+    db1.connect()
+    db2.connect()  # Ya está conectado
+    
+    # Demostrar descriptores
+    student1 = Student("Alice", 20, 85.0)
+    student2 = Student("Bob", 22, 92.5)
+    
+    print(f"Student 1: {student1}")
+    print(f"Student 2: {student2}")
+    
+    try:
+        student1.grade = 105  # Debería fallar
+    except ValueError as e:
+        print(f"Validation error: {e}")
+    
+    # Demostrar properties avanzadas
+    class Temperature:
+        def __init__(self, celsius: float = 0):
+            self._celsius = celsius
+        
+        @property
+        def celsius(self) -> float:
+            return self._celsius
+        
+        @celsius.setter
+        def celsius(self, value: float):
+            if value < -273.15:
+                raise ValueError("Temperature cannot be below absolute zero")
+            self._celsius = value
+        
+        @property
+        def fahrenheit(self) -> float:
+            return self._celsius * 9/5 + 32
+        
+        @fahrenheit.setter
+        def fahrenheit(self, value: float):
+            self.celsius = (value - 32) * 5/9
+        
+        @property
+        def kelvin(self) -> float:
+            return self._celsius + 273.15
+        
+        @kelvin.setter
+        def kelvin(self, value: float):
+            self.celsius = value - 273.15
+        
+        def __str__(self):
+            return f"{self._celsius:.1f}°C ({self.fahrenheit:.1f}°F, {self.kelvin:.1f}K)"
+    
+    temp = Temperature(25)
+    print(f"Temperature: {temp}")
+    
+    temp.fahrenheit = 100
+    print(f"After setting to 100°F: {temp}")
+    
+    # Demostrar weakref
+    class Observer:
+        def __init__(self, name):
+            self.name = name
+        
+        def update(self, message):
+            print(f"Observer {self.name} received: {message}")
+    
+    class Subject:
+        def __init__(self):
+            self._observers = weakref.WeakSet()
+        
+        def attach(self, observer):
+            self._observers.add(observer)
+        
+        def notify(self, message):
+            for observer in self._observers:
+                observer.update(message)
+    
+    subject = Subject()
+    obs1 = Observer("Observer1")
+    obs2 = Observer("Observer2")
+    
+    subject.attach(obs1)
+    subject.attach(obs2)
+    subject.notify("Hello observers!")
+    
+    # obs2 se elimina automáticamente cuando sale de scope
+    del obs2
+    gc.collect()  # Forzar garbage collection
+    
+    subject.notify("Second message")
+    
+    # Single dispatch (polimorfismo basado en tipos)
+    @singledispatch
+    def format_data(arg):
+        return f"Unknown type: {type(arg).__name__}"
+    
+    @format_data.register
+    def _(arg: int):
+        return f"Integer: {arg:,}"
+    
+    @format_data.register
+    def _(arg: float):
+        return f"Float: {arg:.2f}"
+    
+    @format_data.register
+    def _(arg: str):
+        return f"String: '{arg}' (length: {len(arg)})"
+    
+    @format_data.register
+    def _(arg: list):
+        return f"List with {len(arg)} elements: {arg}"
+    
+    print(f"\nSingle dispatch examples:")
+    print(format_data(42))
+    print(format_data(3.14159))
+    print(format_data("Hello, World!"))
+    print(format_data([1, 2, 3, 4, 5]))
+    print(format_data({"key": "value"}))
+
+def demonstrate_data_structures():
+    """Demuestra estructuras de datos avanzadas"""
+    print("\n=== ADVANCED DATA STRUCTURES DEMO ===")
+    
+    # Uso de dataclasses
+    @dataclass
+    class Employee:
+        name: str
+        department: str
+        salary: float
+        start_date: datetime.date = field(default_factory=datetime.date.today)
+        skills: List[str] = field(default_factory=list)
+        
+        def __post_init__(self):
+            if self.salary < 0:
+                raise ValueError("Salary cannot be negative")
+        
+        @property
+        def years_of_service(self) -> int:
+            return (datetime.date.today() - self.start_date).days // 365
+        
+        def add_skill(self, skill: str):
+            if skill not in self.skills:
+                self.skills.append(skill)
+        
+        def get_annual_bonus(self) -> float:
+            return self.salary * 0.1 * max(1, self.years_of_service)
+    
+    emp1 = Employee("John Doe", "Engineering", 75000, datetime.date(2020, 1, 15))
+    emp1.add_skill("Python")
+    emp1.add_skill("SQL")
+    emp1.add_skill("Docker")
+    
+    print(f"Employee: {emp1.name}")
+    print(f"Years of service: {emp1.years_of_service}")
+    print(f"Annual bonus: ${emp1.get_annual_bonus():,.2f}")
+    print(f"Skills: {emp1.skills}")
+    
+    # Enums avanzados
+    class HttpStatus(IntEnum):
+        OK = 200
+        NOT_FOUND = 404
+        INTERNAL_ERROR = 500
+        
+        def __str__(self):
+            return f"{self.value}: {self.name.replace('_', ' ').title()}"
+        
+        @classmethod
+        def is_success(cls, code):
+            return 200 <= code < 300
+        
+        @classmethod
+        def is_error(cls, code):
+            return code >= 400
+    
+    status = HttpStatus.NOT_FOUND
+    print(f"\nHTTP Status: {status}")
+    print(f"Is success? {HttpStatus.is_success(status)}")
+    print(f"Is error? {HttpStatus.is_error(status)}")
+    
+    # Flags para combinaciones
+    file_permissions = Permission.READ | Permission.WRITE
+    print(f"\nFile permissions: {file_permissions}")
+    print(f"Has read permission? {Permission.READ in file_permissions}")
+    print(f"Has execute permission? {Permission.EXECUTE in file_permissions}")
+    
+    # Named tuples con métodos
+    class Point(namedtuple('Point', ['x', 'y'])):
+        __slots__ = ()
+        
+        def distance_to(self, other):
+            return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+        
+        def translate(self, dx, dy):
+            return Point(self.x + dx, self.y + dy)
+        
+        @property
+        def magnitude(self):
+            return math.sqrt(self.x**2 + self.y**2)
+    
+    p1 = Point(3, 4)
+    p2 = Point(0, 0)
+    print(f"\nPoint 1: {p1}, magnitude: {p1.magnitude:.2f}")
+    print(f"Distance to origin: {p1.distance_to(p2):.2f}")
+    
+    p3 = p1.translate(2, -1)
+    print(f"Translated point: {p3}")
+
+def demonstrate_serialization():
+    """Demuestra serialización de datos"""
+    print("\n=== SERIALIZATION DEMO ===")
+    
+    # Datos de ejemplo
+    complex_data = {
+        "name": "John Doe",
+        "age": 30,
+        "scores": [85.5, 92.3, 78.9],
+        "metadata": {
+            "created": datetime.datetime.now().isoformat(),
+            "version": 1.0,
+            "active": True
+        },
+        "tags": {"python", "programming", "tutorial"}  # Set
+    }
+    
+    # JSON serialization (sets need special handling)
+    class CustomJSONEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, set):
+                return list(obj)
+            elif isinstance(obj, datetime.datetime):
+                return obj.isoformat()
+            return super().default(obj)
+    
+    json_data = json.dumps(complex_data, cls=CustomJSONEncoder, indent=2)
+    print("JSON serialization:")
+    print(json_data)
+    
+    # Deserialize from JSON
+    parsed_data = json.loads(json_data)
+    parsed_data['tags'] = set(parsed_data['tags'])  # Convert back to set
+    print(f"\nParsed back: {parsed_data['name']}, tags: {parsed_data['tags']}")
+    
+    # Pickle serialization (handles Python objects natively)
+    print("\nPickle serialization:")
+    
+    # Create objects to serialize
+    point = Point2D(10.5, 20.3)
+    dog = Dog("Buddy", "Golden Retriever")
+    data_to_pickle = {
+        "point": point,
+        "dog": dog,
+        "lambda_func": lambda x: x**2,  # Even lambdas can be pickled in some cases
+        "complex_number": complex(3, 4)
+    }
+    
+    # Serialize to bytes
+    pickled_data = pickle.dumps(data_to_pickle)
+    print(f"Pickled data size: {len(pickled_data)} bytes")
+    
+    # Deserialize
+    unpickled_data = pickle.loads(pickled_data)
+    print(f"Unpickled point: {unpickled_data['point']}")
+    print(f"Unpickled dog: {unpickled_data['dog'].name} ({unpickled_data['dog'].breed})")
+    print(f"Lambda result: {unpickled_data['lambda_func'](5)}")
+    
+    # File-based serialization
+    with open('data.pickle', 'wb') as f:
+        pickle.dump(data_to_pickle, f)
+    
+    with open('data.pickle', 'rb') as f:
+        loaded_data = pickle.load(f)
+    
+    print(f"Loaded from file - dog breed: {loaded_data['dog'].breed}")
+    
+    # Base64 encoding for binary data
+    print("\nBase64 encoding:")
+    binary_data = b"This is binary data with special chars: \x00\x01\x02"
+    encoded = b64encode(binary_data).decode('ascii')
+    print(f"Encoded: {encoded}")
+    
+    decoded = b64decode(encoded.encode('ascii'))
+    print(f"Decoded: {decoded}")
+
+def demonstrate_advanced_functions():
+    """Demuestra funciones avanzadas"""
+    print("\n=== ADVANCED FUNCTIONS DEMO ===")
+    
+    # Closure con estado
+    def create_counter(initial=0, step=1):
+        count = initial
+        
+        def counter():
+            nonlocal count
+            count += step
+            return count
+        
+        def reset():
+            nonlocal count
+            count = initial
+        
+        def get_current():
+            return count
+        
+        # Añadir métodos al objeto función
+        counter.reset = reset
+        counter.get_current = get_current
+        return counter
+    
+    counter1 = create_counter(0, 1)
+    counter2 = create_counter(100, 10)
+    
+    print("Counter 1:", [counter1() for _ in range(5)])
+    print("Counter 2:", [counter2() for _ in range(3)])
+    print(f"Counter 1 current: {counter1.get_current()}")
+    
+    counter1.reset()
+    print(f"Counter 1 after reset: {counter1.get_current()}")
+    
+    # Función que retorna múltiples tipos de callable
+    def create_math_operations():
+        operations = {}
+        
+        def add(x, y):
+            return x + y
+        
+        def multiply(x, y):
+            return x * y
+        
+        def power(x, y):
+            return x ** y
+        
+        operations['add'] = add
+        operations['multiply'] = multiply
+        operations['power'] = power
+        
+        # Función principal que delega
+        def calculate(operation, x, y):
+            if operation in operations:
+                return operations[operation](x, y)
+            else:
+                raise ValueError(f"Unknown operation: {operation}")
+        
+        # Añadir las operaciones como métodos
+        for name, func in operations.items():
+            setattr(calculate, name, func)
+        
+        return calculate
+    
+    calc = create_math_operations()
+    print(f"\nCalculator results:")
+    print(f"calc('add', 5, 3) = {calc('add', 5, 3)}")
+    print(f"calc.multiply(4, 7) = {calc.multiply(4, 7)}")
+    print(f"calc.power(2, 8) = {calc.power(2, 8)}")
+    
+    # Función con argumentos dinámicos
+    def flexible_function(*args, **kwargs):
+        print(f"Positional args: {args}")
+        print(f"Keyword args: {kwargs}")
+        
+        # Procesar argumentos de manera inteligente
+        numbers = [arg for arg in args if isinstance(arg, (int, float))]
+        strings = [arg for arg in args if isinstance(arg, str)]
+        
+        result = {
+            'sum_of_numbers': sum(numbers) if numbers else 0,
+            'concatenated_strings': ' '.join(strings),
+            'keyword_count': len(kwargs),
+            'total_args': len(args)
+        }
+        
+        return result
+    
+    result = flexible_function(1, 2, 3, "hello", "world", debug=True, version=1.0)
+    print(f"\nFlexible function result: {result}")
+    
+    # Función con annotations personalizadas
+    def annotated_function(
+        x: "A number" = 10,
+        y: "Another number" = 20
+    ) -> "The sum of x and y":
+        """Function with custom annotations"""
+        return x + y
+    
+    print(f"\nFunction annotations: {annotated_function.__annotations__}")
+    print(f"Function result: {annotated_function(15, 25)}")
+
+# ==================== FUNCIÓN PRINCIPAL MAIN ====================
+async def async_main():
+    """Función main asíncrona"""
+    print("🐍 COMPREHENSIVE PYTHON DEMONSTRATION 🐍")
+    print("=" * 60)
+    
+    try:
+        # Demostración de características básicas
+        demonstrate_file_operations()
+        demonstrate_database_operations()
+        demonstrate_regex_operations()
+        demonstrate_datetime_operations()
+        demonstrate_advanced_math()
+        
+        # Demostración de algoritmos y estructuras
+        demonstrate_algorithms()
+        demonstrate_functional_programming()
+        demonstrate_generators_and_iterators()
+        
+        # Demostración de POO avanzada
+        demonstrate_advanced_oop()
+        demonstrate_data_structures()
+        
+        # Demostración de características modernas
+        demonstrate_type_hints_and_annotations()
+        demonstrate_decorators()
+        demonstrate_context_managers()
+        demonstrate_serialization()
+        demonstrate_advanced_functions()
+        
+        # Demostración de concurrencia
+        print("\n=== THREADING DEMO ===")
+        counter = ThreadSafeCounter()
+        threads = []
+        
+        for i in range(3):
+            thread = threading.Thread(target=worker_thread, args=(f"Worker-{i}", counter, 3))
+            threads.append(thread)
+            thread.start()
+        
+        for thread in threads:
+            thread.join()
+        
+        print(f"Final counter value: {counter.get_value()}")
+        
+        # Demostración de programación asíncrona
+        await demonstrate_async_programming()
+        
+        # Demostración de multiproceso (comentado para evitar problemas en algunos entornos)
+        # demonstrate_multiprocessing()
+        
+        # Demostración de networking
+        demonstrate_networking()
+        
+        # Demostración de logging
+        demonstrate_logging()
+        
+        # Demostración de testing
+        demonstrate_testing()
+        
+        # Estadísticas finales
+        print("\n" + "=" * 60)
+        print("📊 FINAL STATISTICS")
+        print("=" * 60)
+        print(f"✓ File operations demonstrated")
+        print(f"✓ Database operations shown")
+        print(f"✓ Regular expressions used")
+        print(f"✓ Date/time manipulation performed")
+        print(f"✓ Advanced mathematics computed")
+        print(f"✓ Algorithms and data structures implemented")
+        print(f"✓ Functional programming techniques applied")
+        print(f"✓ Object-oriented programming showcased")
+        print(f"✓ Type hints and annotations used")
+        print(f"✓ Decorators and context managers implemented")
+        print(f"✓ Serialization formats handled")
+        print(f"✓ Threading and async programming demonstrated")
+        print(f"✓ Networking concepts simulated")
+        print(f"✓ Logging and debugging tools used")
+        print(f"✓ Testing framework implemented")
+        
+        # Información del sistema
+        print(f"\nSystem Information:")
+        print(f"Python version: {sys.version}")
+        print(f"Platform: {sys.platform}")
+        print(f"Memory usage: {sys.getsizeof(globals())} bytes (globals)")
+        print(f"Recursion limit: {sys.getrecursionlimit()}")
+        
+        # Limpieza de archivos temporales
+        temp_files = ['sample.txt', 'sample.json', 'sample.csv', 'sample.xml', 
+                     'sample.zip', 'sample.txt.gz', 'app.log', 'test_file.txt', 'data.pickle']
+        
+        for filename in temp_files:
+            try:
+                if os.path.exists(filename):
+                    os.remove(filename)
+                    print(f"Cleaned up: {filename}")
+            except Exception as e:
+                print(f"Could not remove {filename}: {e}")
+        
+    except Exception as e:
+        print(f"❌ An error occurred during demonstration: {e}")
+        traceback.print_exc()
+    
+    print("\n🎉 Python comprehensive demonstration completed successfully!")
+    print("This program showcased:")
+    print("• Basic Python syntax and data types")
+    print("• Advanced object-oriented programming")
+    print("• Functional programming paradigms") 
+    print("• Concurrency and parallelism")
+    print("• File I/O and data serialization")
+    print("• Database operations")
+    print("• Regular expressions")
+    print("• Date/time handling")
+    print("• Mathematical operations")
+    print("• Algorithm implementations")
+    print("• Testing frameworks")
+    print("• Logging and debugging")
+    print("• Type hints and modern Python features")
+    print("• And much more!")
+
+def main():
+    """Función main sincrónica que ejecuta el programa asíncrono"""
+    if sys.version_info >= (3, 7):
+        asyncio.run(async_main())
+    else:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(async_main())
+        loop.close()
+
+if __name__ == "__main__":
+    # Configuración inicial
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    
+    # Ejecutar el programa principal
+    main()

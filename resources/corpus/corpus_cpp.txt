@@ -1,0 +1,1592 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <memory>
+#include <fstream>
+#include <sstream>
+
+using namespace std;
+
+// ===================== CLASES =====================
+class Libro {
+public:
+    string titulo;
+    string autor;
+    int anio;
+    string isbn;
+    bool disponible;
+
+    Libro(const string& t, const string& a, int an, const string& i)
+        : titulo(t), autor(a), anio(an), isbn(i), disponible(true) {}
+
+    void mostrarInfo() const {
+        cout << titulo << " | " << autor << " | " << anio
+             << " | ISBN: " << isbn
+             << " | " << (disponible ? "Disponible" : "Prestado") << endl;
+    }
+};
+
+class Usuario {
+public:
+    string nombre;
+    int id;
+    vector<string> librosPrestados;
+
+    Usuario(const string& n, int i) : nombre(n), id(i) {}
+
+    void mostrarInfo() const {
+        cout << "Usuario: " << nombre << " | ID: " << id << endl;
+        cout << "Libros prestados: ";
+        if (librosPrestados.empty()) cout << "Ninguno";
+        for (const auto& l : librosPrestados) cout << l << " ";
+        cout << endl;
+    }
+};
+
+// ===================== BIBLIOTECA =====================
+class Biblioteca {
+private:
+    unordered_map<string, unique_ptr<Libro>> catalogo; // clave: ISBN
+    unordered_map<int, unique_ptr<Usuario>> usuarios; // clave: ID
+
+public:
+    void agregarLibro(const string& titulo, const string& autor, int anio, const string& isbn) {
+        if (catalogo.find(isbn) != catalogo.end()) {
+            cout << "El libro ya existe en el catálogo.\n";
+            return;
+        }
+        catalogo[isbn] = make_unique<Libro>(titulo, autor, anio, isbn);
+    }
+
+    void agregarUsuario(const string& nombre, int id) {
+        if (usuarios.find(id) != usuarios.end()) {
+            cout << "El usuario ya existe.\n";
+            return;
+        }
+        usuarios[id] = make_unique<Usuario>(nombre, id);
+    }
+
+    void prestarLibro(int idUsuario, const string& isbn) {
+        auto userIt = usuarios.find(idUsuario);
+        auto libroIt = catalogo.find(isbn);
+
+        if (userIt == usuarios.end()) {
+            cout << "Usuario no encontrado.\n";
+            return;
+        }
+        if (libroIt == catalogo.end()) {
+            cout << "Libro no encontrado.\n";
+            return;
+        }
+        if (!libroIt->second->disponible) {
+            cout << "El libro ya está prestado.\n";
+            return;
+        }
+
+        libroIt->second->disponible = false;
+        userIt->second->librosPrestados.push_back(libroIt->second->titulo);
+        cout << "Libro prestado con éxito.\n";
+    }
+
+    void devolverLibro(int idUsuario, const string& isbn) {
+        auto userIt = usuarios.find(idUsuario);
+        auto libroIt = catalogo.find(isbn);
+
+        if (userIt == usuarios.end() || libroIt == catalogo.end()) {
+            cout << "Usuario o libro no encontrado.\n";
+            return;
+        }
+
+        auto& libros = userIt->second->librosPrestados;
+        auto it = find(libros.begin(), libros.end(), libroIt->second->titulo);
+        if (it != libros.end()) {
+            libros.erase(it);
+            libroIt->second->disponible = true;
+            cout << "Libro devuelto con éxito.\n";
+        } else {
+            cout << "Este libro no estaba prestado por el usuario.\n";
+        }
+    }
+
+    void mostrarCatalogo() const {
+        cout << "\n--- Catálogo de Libros ---\n";
+        for (const auto& [isbn, libro] : catalogo) {
+            libro->mostrarInfo();
+        }
+    }
+
+    void mostrarUsuarios() const {
+        cout << "\n--- Usuarios ---\n";
+        for (const auto& [id, usuario] : usuarios) {
+            usuario->mostrarInfo();
+        }
+    }
+
+    // Guardar catálogo y usuarios en archivos CSV
+    void guardarDatos(const string& fileLibros, const string& fileUsuarios) const {
+        ofstream fLib(fileLibros);
+        for (const auto& [isbn, libro] : catalogo) {
+            fLib << libro->titulo << "," << libro->autor << "," << libro->anio
+                 << "," << libro->isbn << "," << libro->disponible << "\n";
+        }
+
+        ofstream fUsr(fileUsuarios);
+        for (const auto& [id, usuario] : usuarios) {
+            fUsr << usuario->nombre << "," << usuario->id;
+            for (const auto& libro : usuario->librosPrestados) {
+                fUsr << "," << libro;
+            }
+            fUsr << "\n";
+        }
+        cout << "Datos guardados en archivos CSV.\n";
+    }
+};
+
+// ===================== MAIN =====================
+int main() {
+    Biblioteca bib;
+
+    // Agregar libros
+    bib.agregarLibro("Cien Años de Soledad", "Gabriel García Márquez", 1967, "ISBN001");
+    bib.agregarLibro("Don Quijote", "Miguel de Cervantes", 1605, "ISBN002");
+    bib.agregarLibro("El Principito", "Antoine de Saint-Exupéry", 1943, "ISBN003");
+
+    // Agregar usuarios
+    bib.agregarUsuario("Ana", 101);
+    bib.agregarUsuario("Luis", 102);
+
+    bib.mostrarCatalogo();
+    bib.mostrarUsuarios();
+
+    // Prestamos
+    bib.prestarLibro(101, "ISBN001");
+    bib.prestarLibro(102, "ISBN003");
+
+    bib.mostrarCatalogo();
+    bib.mostrarUsuarios();
+
+    // Devoluciones
+    bib.devolverLibro(101, "ISBN001");
+    bib.mostrarCatalogo();
+    bib.mostrarUsuarios();
+
+    // Guardar en archivos
+    bib.guardarDatos("libros.csv", "usuarios.csv");
+
+    return 0;
+}
+/*
+ * CÓDIGO INTEGRAL DE C++
+ * Demostración completa de todas las funcionalidades del lenguaje C++
+ * Incluye: STL, POO, Templates, Lambda, Smart Pointers, Threading, etc.
+ */
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <queue>
+#include <stack>
+#include <deque>
+#include <list>
+#include <forward_list>
+#include <array>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <iterator>
+#include <memory>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
+#include <future>
+#include <chrono>
+#include <random>
+#include <regex>
+#include <fstream>
+#include <sstream>
+#include <exception>
+#include <stdexcept>
+#include <typeinfo>
+#include <type_traits>
+#include <utility>
+#include <tuple>
+#include <variant>
+#include <optional>
+#include <any>
+#include <bitset>
+#include <complex>
+#include <valarray>
+#include <limits>
+#include <cassert>
+#include <cmath>
+#include <cstring>
+#include <ctime>
+
+using namespace std;
+using namespace std::chrono;
+using namespace std::this_thread;
+
+// ==================== MACROS Y CONSTANTES ====================
+#define PI 3.14159265359
+#define MAX_SIZE 1000
+#define DEBUG(x) cout << "DEBUG: " << x << endl
+
+const int GLOBAL_CONSTANT = 100;
+static int static_counter = 0;
+thread_local int thread_local_var = 0;
+
+// ==================== ENUMS Y UNIONS ====================
+enum Color { RED, GREEN, BLUE };
+enum class Status : char { ACTIVE = 'A', INACTIVE = 'I', PENDING = 'P' };
+
+union Data {
+    int i;
+    float f;
+    char str[20];
+};
+
+// ==================== ESTRUCTURAS Y CLASES BASE ====================
+struct Point2D {
+    double x, y;
+    Point2D() : x(0), y(0) {}
+    Point2D(double x, double y) : x(x), y(y) {}
+    
+    // Operator overloading
+    Point2D operator+(const Point2D& other) const {
+        return Point2D(x + other.x, y + other.y);
+    }
+    
+    Point2D& operator+=(const Point2D& other) {
+        x += other.x;
+        y += other.y;
+        return *this;
+    }
+    
+    bool operator==(const Point2D& other) const {
+        return abs(x - other.x) < 1e-9 && abs(y - other.y) < 1e-9;
+    }
+    
+    friend ostream& operator<<(ostream& os, const Point2D& p) {
+        return os << "(" << p.x << ", " << p.y << ")";
+    }
+};
+
+// ==================== CLASE BASE ABSTRACTA ====================
+class Shape {
+protected:
+    string name;
+    mutable int access_count;
+    
+public:
+    Shape(const string& n) : name(n), access_count(0) {}
+    virtual ~Shape() = default;
+    
+    // Pure virtual function
+    virtual double area() const = 0;
+    virtual double perimeter() const = 0;
+    
+    // Virtual function with default implementation
+    virtual void draw() const {
+        cout << "Drawing " << name << endl;
+    }
+    
+    // Const member function
+    const string& getName() const {
+        ++access_count;  // mutable allows modification
+        return name;
+    }
+    
+    // Static member function
+    static int getShapeCount() {
+        return static_counter;
+    }
+};
+
+// ==================== HERENCIA Y POLIMORFISMO ====================
+class Circle : public Shape {
+private:
+    double radius;
+    
+public:
+    explicit Circle(double r) : Shape("Circle"), radius(r) {
+        ++static_counter;
+    }
+    
+    ~Circle() override {
+        cout << "Circle destructor called" << endl;
+        --static_counter;
+    }
+    
+    double area() const override {
+        return PI * radius * radius;
+    }
+    
+    double perimeter() const override {
+        return 2 * PI * radius;
+    }
+    
+    void draw() const override {
+        cout << "Drawing circle with radius " << radius << endl;
+    }
+    
+    double getRadius() const { return radius; }
+    void setRadius(double r) { radius = r; }
+};
+
+class Rectangle : public Shape {
+private:
+    double width, height;
+    
+public:
+    Rectangle(double w, double h) : Shape("Rectangle"), width(w), height(h) {
+        ++static_counter;
+    }
+    
+    ~Rectangle() override {
+        cout << "Rectangle destructor called" << endl;
+        --static_counter;
+    }
+    
+    double area() const override {
+        return width * height;
+    }
+    
+    double perimeter() const override {
+        return 2 * (width + height);
+    }
+    
+    void draw() const override {
+        cout << "Drawing rectangle " << width << "x" << height << endl;
+    }
+};
+
+// ==================== MULTIPLE INHERITANCE ====================
+class Drawable {
+public:
+    virtual void render() const = 0;
+    virtual ~Drawable() = default;
+};
+
+class Movable {
+protected:
+    Point2D position;
+    
+public:
+    Movable(Point2D pos = Point2D()) : position(pos) {}
+    virtual void move(const Point2D& delta) {
+        position += delta;
+    }
+    
+    Point2D getPosition() const { return position; }
+    virtual ~Movable() = default;
+};
+
+class GameObject : public Drawable, public Movable {
+private:
+    string id;
+    bool visible;
+    
+public:
+    GameObject(const string& id, Point2D pos = Point2D()) 
+        : Movable(pos), id(id), visible(true) {}
+    
+    void render() const override {
+        if (visible) {
+            cout << "Rendering " << id << " at " << position << endl;
+        }
+    }
+    
+    void setVisible(bool v) { visible = v; }
+    bool isVisible() const { return visible; }
+    const string& getId() const { return id; }
+};
+
+// ==================== TEMPLATES ====================
+template<typename T>
+class Stack {
+private:
+    vector<T> data;
+    
+public:
+    void push(const T& item) {
+        data.push_back(item);
+    }
+    
+    void push(T&& item) {  // Move semantics
+        data.push_back(std::move(item));
+    }
+    
+    T pop() {
+        if (empty()) {
+            throw runtime_error("Stack is empty");
+        }
+        T item = std::move(data.back());
+        data.pop_back();
+        return item;
+    }
+    
+    const T& top() const {
+        if (empty()) {
+            throw runtime_error("Stack is empty");
+        }
+        return data.back();
+    }
+    
+    bool empty() const { return data.empty(); }
+    size_t size() const { return data.size(); }
+};
+
+// Template specialization
+template<>
+class Stack<bool> {
+private:
+    bitset<1000> data;
+    size_t count;
+    
+public:
+    Stack() : count(0) {}
+    
+    void push(bool item) {
+        if (count >= 1000) throw runtime_error("Stack overflow");
+        data[count++] = item;
+    }
+    
+    bool pop() {
+        if (empty()) throw runtime_error("Stack is empty");
+        return data[--count];
+    }
+    
+    bool top() const {
+        if (empty()) throw runtime_error("Stack is empty");
+        return data[count - 1];
+    }
+    
+    bool empty() const { return count == 0; }
+    size_t size() const { return count; }
+};
+
+// Variadic templates
+template<typename T>
+void print(const T& t) {
+    cout << t << endl;
+}
+
+template<typename T, typename... Args>
+void print(const T& t, const Args&... args) {
+    cout << t << " ";
+    print(args...);
+}
+
+// Template with multiple parameters
+template<typename T, int N>
+class FixedArray {
+private:
+    T data[N];
+    
+public:
+    T& operator[](size_t index) {
+        if (index >= N) throw out_of_range("Index out of range");
+        return data[index];
+    }
+    
+    const T& operator[](size_t index) const {
+        if (index >= N) throw out_of_range("Index out of range");
+        return data[index];
+    }
+    
+    constexpr size_t size() const { return N; }
+};
+
+// ==================== FUNCTION TEMPLATES ====================
+template<typename T>
+T max3(const T& a, const T& b, const T& c) {
+    return max(max(a, b), c);
+}
+
+template<typename Iter>
+void quicksort(Iter first, Iter last) {
+    if (distance(first, last) <= 1) return;
+    
+    auto pivot = *first;
+    auto middle1 = partition(first, last, [pivot](const auto& em) {
+        return em < pivot;
+    });
+    auto middle2 = partition(middle1, last, [pivot](const auto& em) {
+        return !(pivot < em);
+    });
+    
+    quicksort(first, middle1);
+    quicksort(middle2, last);
+}
+
+// ==================== CONCEPTS (C++20 style simulation) ====================
+template<typename T>
+struct is_numeric {
+    static const bool value = std::is_arithmetic<T>::value;
+};
+
+template<typename T>
+typename enable_if<is_numeric<T>::value, T>::type
+safe_divide(const T& a, const T& b) {
+    if (b == T(0)) throw invalid_argument("Division by zero");
+    return a / b;
+}
+
+// ==================== SMART POINTERS DEMO ====================
+class Resource {
+private:
+    string name;
+    static int count;
+    
+public:
+    Resource(const string& n) : name(n) {
+        ++count;
+        cout << "Resource " << name << " created (total: " << count << ")" << endl;
+    }
+    
+    ~Resource() {
+        --count;
+        cout << "Resource " << name << " destroyed (total: " << count << ")" << endl;
+    }
+    
+    void use() const {
+        cout << "Using resource: " << name << endl;
+    }
+    
+    static int getCount() { return count; }
+};
+
+int Resource::count = 0;
+
+// ==================== EXCEPTION HANDLING ====================
+class CustomException : public exception {
+private:
+    string message;
+    
+public:
+    explicit CustomException(const string& msg) : message(msg) {}
+    
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+};
+
+void risky_function(int value) {
+    if (value < 0) {
+        throw CustomException("Negative value not allowed");
+    }
+    if (value == 0) {
+        throw invalid_argument("Zero is not valid");
+    }
+    if (value > 100) {
+        throw out_of_range("Value too large");
+    }
+}
+
+// ==================== THREADING AND CONCURRENCY ====================
+class ThreadSafeCounter {
+private:
+    atomic<int> count;
+    mutable mutex mtx;
+    condition_variable cv;
+    
+public:
+    ThreadSafeCounter() : count(0) {}
+    
+    void increment() {
+        count.fetch_add(1);
+        cv.notify_one();
+    }
+    
+    void decrement() {
+        count.fetch_sub(1);
+        cv.notify_one();
+    }
+    
+    int get() const {
+        return count.load();
+    }
+    
+    void wait_for_value(int target) {
+        unique_lock<mutex> lock(mtx);
+        cv.wait(lock, [this, target]{ return count.load() == target; });
+    }
+};
+
+// ==================== RAII WRAPPER ====================
+class FileWrapper {
+private:
+    FILE* file;
+    
+public:
+    explicit FileWrapper(const string& filename) {
+        file = fopen(filename.c_str(), "w+");
+        if (!file) {
+            throw runtime_error("Cannot open file: " + filename);
+        }
+    }
+    
+    ~FileWrapper() {
+        if (file) {
+            fclose(file);
+            cout << "File closed automatically" << endl;
+        }
+    }
+    
+    // Disable copy
+    FileWrapper(const FileWrapper&) = delete;
+    FileWrapper& operator=(const FileWrapper&) = delete;
+    
+    // Enable move
+    FileWrapper(FileWrapper&& other) noexcept : file(other.file) {
+        other.file = nullptr;
+    }
+    
+    FileWrapper& operator=(FileWrapper&& other) noexcept {
+        if (this != &other) {
+            if (file) fclose(file);
+            file = other.file;
+            other.file = nullptr;
+        }
+        return *this;
+    }
+    
+    void write(const string& data) {
+        if (file) {
+            fprintf(file, "%s", data.c_str());
+            fflush(file);
+        }
+    }
+};
+
+// ==================== FUNCTION OBJECTS AND LAMBDAS ====================
+class Multiplier {
+private:
+    int factor;
+    
+public:
+    explicit Multiplier(int f) : factor(f) {}
+    
+    int operator()(int value) const {
+        return value * factor;
+    }
+};
+
+// ==================== ALGORITHM DEMONSTRATIONS ====================
+void demonstrate_algorithms() {
+    cout << "\n=== ALGORITHM DEMONSTRATIONS ===" << endl;
+    
+    vector<int> nums = {5, 2, 8, 1, 9, 3, 7, 4, 6};
+    vector<int> result;
+    
+    // Copy and transform
+    transform(nums.begin(), nums.end(), back_inserter(result), 
+              [](int x) { return x * x; });
+    
+    cout << "Original: ";
+    copy(nums.begin(), nums.end(), ostream_iterator<int>(cout, " "));
+    cout << endl;
+    
+    cout << "Squared: ";
+    copy(result.begin(), result.end(), ostream_iterator<int>(cout, " "));
+    cout << endl;
+    
+    // Find operations
+    auto it = find_if(nums.begin(), nums.end(), [](int x) { return x > 5; });
+    if (it != nums.end()) {
+        cout << "First number > 5: " << *it << endl;
+    }
+    
+    // Count operations
+    int even_count = count_if(nums.begin(), nums.end(), [](int x) { return x % 2 == 0; });
+    cout << "Even numbers count: " << even_count << endl;
+    
+    // Sort and unique
+    sort(nums.begin(), nums.end());
+    nums.erase(unique(nums.begin(), nums.end()), nums.end());
+    
+    cout << "Sorted unique: ";
+    copy(nums.begin(), nums.end(), ostream_iterator<int>(cout, " "));
+    cout << endl;
+    
+    // Accumulate
+    int sum = accumulate(nums.begin(), nums.end(), 0);
+    int product = accumulate(nums.begin(), nums.end(), 1, multiplies<int>());
+    
+    cout << "Sum: " << sum << ", Product: " << product << endl;
+    
+    // Partition
+    vector<int> nums2 = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    auto partition_point = partition(nums2.begin(), nums2.end(), 
+                                   [](int x) { return x % 2 == 0; });
+    
+    cout << "Partitioned (evens first): ";
+    copy(nums2.begin(), nums2.end(), ostream_iterator<int>(cout, " "));
+    cout << endl;
+}
+
+// ==================== STL CONTAINERS DEMO ====================
+void demonstrate_containers() {
+    cout << "\n=== STL CONTAINERS DEMO ===" << endl;
+    
+    // Vector
+    vector<string> vec = {"apple", "banana", "cherry"};
+    vec.push_back("date");
+    vec.emplace_back("elderberry");
+    
+    cout << "Vector contents: ";
+    for (const auto& item : vec) {
+        cout << item << " ";
+    }
+    cout << endl;
+    
+    // Map
+    map<string, int> word_count;
+    for (const auto& word : vec) {
+        word_count[word] = word.length();
+    }
+    
+    cout << "Word lengths:" << endl;
+    for (const auto& [word, length] : word_count) {  // Structured binding
+        cout << "  " << word << ": " << length << endl;
+    }
+    
+    // Set
+    set<int> unique_lengths;
+    transform(vec.begin(), vec.end(), inserter(unique_lengths, unique_lengths.end()),
+              [](const string& s) { return s.length(); });
+    
+    cout << "Unique lengths: ";
+    copy(unique_lengths.begin(), unique_lengths.end(), 
+         ostream_iterator<int>(cout, " "));
+    cout << endl;
+    
+    // Queue and Stack
+    queue<int> q;
+    stack<int> st;
+    
+    for (int i = 1; i <= 5; ++i) {
+        q.push(i);
+        st.push(i);
+    }
+    
+    cout << "Queue order: ";
+    while (!q.empty()) {
+        cout << q.front() << " ";
+        q.pop();
+    }
+    cout << endl;
+    
+    cout << "Stack order: ";
+    while (!st.empty()) {
+        cout << st.top() << " ";
+        st.pop();
+    }
+    cout << endl;
+    
+    // Unordered containers
+    unordered_set<string> hash_set(vec.begin(), vec.end());
+    unordered_map<string, size_t> hash_map;
+    
+    for (const auto& word : hash_set) {
+        hash_map[word] = hash<string>{}(word);
+    }
+    
+    cout << "Hash values:" << endl;
+    for (const auto& [word, hash_val] : hash_map) {
+        cout << "  " << word << ": " << hash_val << endl;
+    }
+}
+
+// ==================== REGEX DEMO ====================
+void demonstrate_regex() {
+    cout << "\n=== REGEX DEMONSTRATION ===" << endl;
+    
+    string text = "Contact us at: john@example.com, jane.doe@company.org, or call +1-555-123-4567";
+    
+    // Email regex
+    regex email_pattern(R"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})");
+    sregex_iterator iter(text.begin(), text.end(), email_pattern);
+    sregex_iterator end;
+    
+    cout << "Found emails:" << endl;
+    while (iter != end) {
+        cout << "  " << iter->str() << endl;
+        ++iter;
+    }
+    
+    // Phone regex
+    regex phone_pattern(R"(\+?\d{1,3}[-.]?\d{3}[-.]?\d{3}[-.]?\d{4})");
+    smatch phone_match;
+    
+    if (regex_search(text, phone_match, phone_pattern)) {
+        cout << "Found phone: " << phone_match.str() << endl;
+    }
+    
+    // Replace operation
+    string cleaned = regex_replace(text, email_pattern, "[EMAIL]");
+    cleaned = regex_replace(cleaned, phone_pattern, "[PHONE]");
+    cout << "Cleaned text: " << cleaned << endl;
+}
+
+// ==================== CHRONO AND TIME DEMO ====================
+void demonstrate_chrono() {
+    cout << "\n=== CHRONO AND TIME DEMO ===" << endl;
+    
+    auto start = high_resolution_clock::now();
+    
+    // Simulate some work
+    this_thread::sleep_for(milliseconds(100));
+    
+    auto end = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(end - start);
+    
+    cout << "Operation took: " << duration.count() << " microseconds" << endl;
+    
+    // Different time points
+    auto now = system_clock::now();
+    auto time_t_now = system_clock::to_time_t(now);
+    
+    cout << "Current time: " << ctime(&time_t_now);
+    
+    // Duration arithmetic
+    auto one_hour_later = now + hours(1);
+    auto one_day_ago = now - days(1);
+    
+    cout << "One hour from now: " << ctime(&(time_t_now = system_clock::to_time_t(one_hour_later)));
+    cout << "One day ago: " << ctime(&(time_t_now = system_clock::to_time_t(one_day_ago)));
+}
+
+// ==================== RANDOM NUMBER DEMO ====================
+void demonstrate_random() {
+    cout << "\n=== RANDOM NUMBER DEMONSTRATION ===" << endl;
+    
+    random_device rd;
+    mt19937 gen(rd());
+    
+    // Different distributions
+    uniform_int_distribution<> int_dist(1, 100);
+    uniform_real_distribution<> real_dist(0.0, 1.0);
+    normal_distribution<> normal_dist(50.0, 10.0);
+    bernoulli_distribution coin_flip(0.5);
+    
+    cout << "Random integers (1-100): ";
+    for (int i = 0; i < 5; ++i) {
+        cout << int_dist(gen) << " ";
+    }
+    cout << endl;
+    
+    cout << "Random reals (0-1): ";
+    for (int i = 0; i < 5; ++i) {
+        cout << fixed << setprecision(3) << real_dist(gen) << " ";
+    }
+    cout << endl;
+    
+    cout << "Normal distribution: ";
+    for (int i = 0; i < 5; ++i) {
+        cout << fixed << setprecision(1) << normal_dist(gen) << " ";
+    }
+    cout << endl;
+    
+    cout << "Coin flips: ";
+    for (int i = 0; i < 10; ++i) {
+        cout << (coin_flip(gen) ? "H" : "T");
+    }
+    cout << endl;
+}
+
+// ==================== THREADING DEMO ====================
+void worker_thread(int id, ThreadSafeCounter& counter) {
+    thread_local_var = id;
+    
+    for (int i = 0; i < 5; ++i) {
+        counter.increment();
+        cout << "Thread " << id << " incremented counter to " << counter.get() << endl;
+        this_thread::sleep_for(milliseconds(100));
+    }
+}
+
+void demonstrate_threading() {
+    cout << "\n=== THREADING DEMONSTRATION ===" << endl;
+    
+    ThreadSafeCounter counter;
+    vector<thread> threads;
+    
+    // Launch multiple threads
+    for (int i = 0; i < 3; ++i) {
+        threads.emplace_back(worker_thread, i, ref(counter));
+    }
+    
+    // Wait for a specific value
+    future<void> waiter = async(launch::async, [&counter]() {
+        counter.wait_for_value(15);
+        cout << "Counter reached 15!" << endl;
+    });
+    
+    // Join all threads
+    for (auto& t : threads) {
+        t.join();
+    }
+    
+    waiter.get();
+    cout << "Final counter value: " << counter.get() << endl;
+}
+
+// ==================== MODERN C++ FEATURES DEMO ====================
+void demonstrate_modern_features() {
+    cout << "\n=== MODERN C++ FEATURES ===" << endl;
+    
+    // Optional
+    optional<string> maybe_string;
+    if (!maybe_string.has_value()) {
+        cout << "Optional is empty" << endl;
+    }
+    
+    maybe_string = "Hello, World!";
+    if (maybe_string) {
+        cout << "Optional contains: " << *maybe_string << endl;
+    }
+    
+    // Variant
+    variant<int, string, double> var_data;
+    var_data = 42;
+    cout << "Variant holds int: " << get<int>(var_data) << endl;
+    
+    var_data = string("Hello");
+    cout << "Variant holds string: " << get<string>(var_data) << endl;
+    
+    // Visit variant
+    visit([](const auto& value) {
+        cout << "Variant value: " << value << " (type: " << typeid(value).name() << ")" << endl;
+    }, var_data);
+    
+    // Any
+    any any_data = 3.14;
+    cout << "Any holds double: " << any_cast<double>(any_data) << endl;
+    
+    any_data = string("Any string");
+    cout << "Any holds string: " << any_cast<string>(any_data) << endl;
+    
+    // Tuple
+    tuple<int, string, double> tup = make_tuple(1, "Hello", 3.14);
+    auto [i, s, d] = tup;  // Structured binding
+    cout << "Tuple contents: " << i << ", " << s << ", " << d << endl;
+    
+    // Lambda with capture
+    int multiplier = 5;
+    auto lambda = [multiplier, &counter = static_counter](int value) mutable -> int {
+        multiplier *= 2;
+        ++counter;
+        return value * multiplier;
+    };
+    
+    cout << "Lambda result: " << lambda(10) << endl;
+    cout << "Static counter after lambda: " << static_counter << endl;
+}
+
+// ==================== MEMORY MANAGEMENT DEMO ====================
+void demonstrate_memory_management() {
+    cout << "\n=== MEMORY MANAGEMENT DEMO ===" << endl;
+    
+    // Unique pointer
+    auto unique_res = make_unique<Resource>("Unique Resource");
+    unique_res->use();
+    
+    // Shared pointer
+    shared_ptr<Resource> shared_res1 = make_shared<Resource>("Shared Resource");
+    {
+        shared_ptr<Resource> shared_res2 = shared_res1;
+        cout << "Reference count: " << shared_res1.use_count() << endl;
+        shared_res2->use();
+    }
+    cout << "Reference count after scope: " << shared_res1.use_count() << endl;
+    
+    // Weak pointer
+    weak_ptr<Resource> weak_res = shared_res1;
+    if (auto locked = weak_res.lock()) {
+        locked->use();
+    }
+    
+    cout << "Total resources before cleanup: " << Resource::getCount() << endl;
+    
+    // Reset pointers
+    unique_res.reset();
+    shared_res1.reset();
+    
+    cout << "Total resources after cleanup: " << Resource::getCount() << endl;
+}
+
+// ==================== FILE I/O DEMO ====================
+void demonstrate_file_io() {
+    cout << "\n=== FILE I/O DEMONSTRATION ===" << endl;
+    
+    try {
+        // RAII file handling
+        FileWrapper file("test_output.txt");
+        file.write("Hello, File I/O!\n");
+        file.write("This is a test of RAII file management.\n");
+        
+        // Stream-based I/O
+        ofstream out_file("stream_output.txt");
+        out_file << "Stream-based output" << endl;
+        out_file << "Number: " << 42 << ", Pi: " << PI << endl;
+        out_file.close();
+        
+        // Read back
+        ifstream in_file("stream_output.txt");
+        string line;
+        cout << "Reading from file:" << endl;
+        while (getline(in_file, line)) {
+            cout << "  " << line << endl;
+        }
+        
+        // String stream
+        stringstream ss;
+        ss << "String stream demo: " << 123 << " " << 45.67;
+        string str_result = ss.str();
+        cout << "String stream result: " << str_result << endl;
+        
+    } catch (const exception& e) {
+        cout << "File I/O error: " << e.what() << endl;
+    }
+}
+
+// ==================== COMPLEX TEMPLATE EXAMPLE ====================
+template<typename Container, typename Predicate>
+auto filter_container(const Container& container, Predicate pred) 
+    -> vector<typename Container::value_type> {
+    
+    vector<typename Container::value_type> result;
+    copy_if(container.begin(), container.end(), back_inserter(result), pred);
+    return result;
+}
+
+template<typename T>
+class Observer {
+public:
+    virtual ~Observer() = default;
+    virtual void update(const T& data) = 0;
+};
+
+template<typename T>
+class Subject {
+private:
+    vector<Observer<T>*> observers;
+    T data;
+    
+public:
+    void attach(Observer<T>* observer) {
+        observers.push_back(observer);
+    }
+    
+    void detach(Observer<T>* observer) {
+        observers.erase(remove(observers.begin(), observers.end(), observer), 
+                       observers.end());
+    }
+    
+    void notify() {
+        for (auto* observer : observers) {
+            observer->update(data);
+        }
+    }
+    
+    void setData(const T& new_data) {
+        data = new_data;
+        notify();
+    }
+    
+    const T& getData() const { return data; }
+};
+
+class IntegerObserver : public Observer<int> {
+private:
+    string name;
+    
+public:
+    explicit IntegerObserver(const string& n) : name(n) {}
+    
+    void update(const int& data) override {
+        cout << name << " received update: " << data << endl;
+    }
+};
+
+// ==================== MAIN FUNCTION ====================
+int main() {
+    cout << "=== COMPREHENSIVE C++ DEMONSTRATION ===" << endl;
+    
+    try {
+        // Basic operations
+        cout << "\n=== BASIC OPERATIONS ===" << endl;
+        
+        // Stack operations
+        Stack<int> int_stack;
+        for (int i = 1; i <= 5; ++i) {
+            int_stack.push(i);
+        }
+        
+        cout << "Stack contents (LIFO): ";
+        while (!int_stack.empty()) {
+            cout << int_stack.pop() << " ";
+        }
+        cout << endl;
+        
+        // Template functions
+        cout << "Max of 3, 7, 5: " << max3(3, 7, 5) << endl;
+        cout << "Max of 'a', 'z', 'm': " << max3('a', 'z', 'm') << endl;
+        
+        // Variadic template
+        cout << "Variadic print: ";
+        print(1, 2.5, "hello", 'c', true);
+        
+        // Fixed array template
+        FixedArray<double, 5> arr;
+        for (size_t i = 0; i < arr.size(); ++i) {
+            arr[i] = i * 1.5;
+        }
+        
+        cout << "Fixed array contents: ";
+        for (size_t i = 0; i < arr.size(); ++i) {
+            cout << arr[i] << " ";
+        }
+        cout << endl;
+        
+        // Point operations
+        Point2D p1(3.0, 4.0);
+        Point2D p2(1.0, 2.0);
+        Point2D p3 = p1 + p2;
+        
+        cout << "Point addition: " << p1 << " + " << p2 << " = " << p3 << endl;
+        
+        // Polymorphism demo
+        cout << "\n=== POLYMORPHISM DEMO ===" << endl;
+        vector<unique_ptr<Shape>> shapes;
+        shapes.push_back(make_unique<Circle>(5.0));
+        shapes.push_back(make_unique<Rectangle>(4.0, 6.0));
+        shapes.push_back(make_unique<Circle>(3.0));
+        
+        for (const auto& shape : shapes) {
+            cout << shape->getName() << ": Area = " << shape->area() 
+                 << ", Perimeter = " << shape->perimeter() << endl;
+            shape->draw();
+        }
+        
+        cout << "Total shapes created: " << Shape::getShapeCount() << endl;
+        
+        // Multiple inheritance demo
+        cout << "\n=== MULTIPLE INHERITANCE DEMO ===" << endl;
+        GameObject player("Player1", Point2D(10, 20));
+        GameObject enemy("Enemy1", Point2D(50, 30));
+        
+        player.render();
+        player.move(Point2D(5, -3));
+        cout << "Player moved to: " << player.getPosition() << endl;
+        
+        enemy.setVisible(false);
+        enemy.render(); // Should not render when invisible
+        
+        // Exception handling demo
+        cout << "\n=== EXCEPTION HANDLING DEMO ===" << endl;
+        vector<int> test_values = {-5, 0, 50, 150};
+        
+        for (int value : test_values) {
+            try {
+                risky_function(value);
+                cout << "Value " << value << " processed successfully" << endl;
+            } catch (const CustomException& e) {
+                cout << "Custom exception for " << value << ": " << e.what() << endl;
+            } catch (const invalid_argument& e) {
+                cout << "Invalid argument for " << value << ": " << e.what() << endl;
+            } catch (const out_of_range& e) {
+                cout << "Out of range for " << value << ": " << e.what() << endl;
+            } catch (...) {
+                cout << "Unknown exception for " << value << endl;
+            }
+        }
+        
+        // Safe divide demo
+        cout << "\nSafe division demo:" << endl;
+        try {
+            cout << "10 / 3 = " << safe_divide(10.0, 3.0) << endl;
+            cout << "10 / 0 = " << safe_divide(10.0, 0.0) << endl;
+        } catch (const exception& e) {
+            cout << "Division error: " << e.what() << endl;
+        }
+        
+        // Function objects and lambdas
+        cout << "\n=== FUNCTION OBJECTS AND LAMBDAS ===" << endl;
+        
+        vector<int> numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        
+        // Using function object
+        Multiplier mult_by_3(3);
+        transform(numbers.begin(), numbers.end(), numbers.begin(), mult_by_3);
+        
+        cout << "After multiplying by 3: ";
+        copy(numbers.begin(), numbers.end(), ostream_iterator<int>(cout, " "));
+        cout << endl;
+        
+        // Using lambda
+        auto is_even = [](int n) { return n % 2 == 0; };
+        auto even_count = count_if(numbers.begin(), numbers.end(), is_even);
+        cout << "Even numbers count: " << even_count << endl;
+        
+        // Lambda with capture
+        int threshold = 15;
+        auto above_threshold = [threshold](int n) { return n > threshold; };
+        auto above_count = count_if(numbers.begin(), numbers.end(), above_threshold);
+        cout << "Numbers above " << threshold << ": " << above_count << endl;
+        
+        // Generic lambda (C++14 style)
+        auto generic_lambda = [](const auto& a, const auto& b) {
+            return a < b ? a : b;
+        };
+        
+        cout << "Min of 5 and 3: " << generic_lambda(5, 3) << endl;
+        cout << "Min of 'z' and 'a': " << generic_lambda('z', 'a') << endl;
+        
+        // Observer pattern demo
+        cout << "\n=== OBSERVER PATTERN DEMO ===" << endl;
+        Subject<int> subject;
+        IntegerObserver obs1("Observer1");
+        IntegerObserver obs2("Observer2");
+        IntegerObserver obs3("Observer3");
+        
+        subject.attach(&obs1);
+        subject.attach(&obs2);
+        
+        cout << "Setting data to 42:" << endl;
+        subject.setData(42);
+        
+        subject.attach(&obs3);
+        cout << "Setting data to 100:" << endl;
+        subject.setData(100);
+        
+        subject.detach(&obs2);
+        cout << "Setting data to 200 (obs2 detached):" << endl;
+        subject.setData(200);
+        
+        // Container filtering demo
+        cout << "\n=== CONTAINER FILTERING DEMO ===" << endl;
+        vector<string> words = {"apple", "banana", "cherry", "date", "elderberry", "fig"};
+        
+        auto long_words = filter_container(words, [](const string& s) {
+            return s.length() > 5;
+        });
+        
+        cout << "Long words (>5 chars): ";
+        for (const auto& word : long_words) {
+            cout << word << " ";
+        }
+        cout << endl;
+        
+        // Complex number demo
+        cout << "\n=== COMPLEX NUMBERS DEMO ===" << endl;
+        complex<double> c1(3, 4);
+        complex<double> c2(1, 2);
+        
+        cout << "c1 = " << c1 << endl;
+        cout << "c2 = " << c2 << endl;
+        cout << "c1 + c2 = " << c1 + c2 << endl;
+        cout << "c1 * c2 = " << c1 * c2 << endl;
+        cout << "|c1| = " << abs(c1) << endl;
+        cout << "arg(c1) = " << arg(c1) << " radians" << endl;
+        
+        // Valarray demo
+        cout << "\n=== VALARRAY DEMO ===" << endl;
+        valarray<int> va1 = {1, 2, 3, 4, 5};
+        valarray<int> va2 = {2, 3, 4, 5, 6};
+        
+        cout << "va1: ";
+        for (int val : va1) cout << val << " ";
+        cout << endl;
+        
+        cout << "va2: ";
+        for (int val : va2) cout << val << " ";
+        cout << endl;
+        
+        valarray<int> va_sum = va1 + va2;
+        cout << "va1 + va2: ";
+        for (int val : va_sum) cout << val << " ";
+        cout << endl;
+        
+        valarray<int> va_mult = va1 * 3;
+        cout << "va1 * 3: ";
+        for (int val : va_mult) cout << val << " ";
+        cout << endl;
+        
+        // Bitset demo
+        cout << "\n=== BITSET DEMO ===" << endl;
+        bitset<8> bits1("10110011");
+        bitset<8> bits2("11001010");
+        
+        cout << "bits1: " << bits1 << endl;
+        cout << "bits2: " << bits2 << endl;
+        cout << "bits1 & bits2: " << (bits1 & bits2) << endl;
+        cout << "bits1 | bits2: " << (bits1 | bits2) << endl;
+        cout << "bits1 ^ bits2: " << (bits1 ^ bits2) << endl;
+        cout << "~bits1: " << ~bits1 << endl;
+        
+        cout << "bits1 count: " << bits1.count() << endl;
+        cout << "bits1[2]: " << bits1[2] << endl;
+        
+        // Union demo
+        cout << "\n=== UNION DEMO ===" << endl;
+        Data data;
+        data.i = 42;
+        cout << "Union as int: " << data.i << endl;
+        
+        data.f = 3.14f;
+        cout << "Union as float: " << data.f << endl;
+        
+        strcpy(data.str, "Hello");
+        cout << "Union as string: " << data.str << endl;
+        
+        // Enum demo
+        cout << "\n=== ENUM DEMO ===" << endl;
+        Color color = RED;
+        Status status = Status::ACTIVE;
+        
+        cout << "Color enum value: " << color << endl;
+        cout << "Status enum value: " << static_cast<char>(status) << endl;
+        
+        switch (status) {
+            case Status::ACTIVE:
+                cout << "Status is ACTIVE" << endl;
+                break;
+            case Status::INACTIVE:
+                cout << "Status is INACTIVE" << endl;
+                break;
+            case Status::PENDING:
+                cout << "Status is PENDING" << endl;
+                break;
+        }
+        
+        // Type traits demo
+        cout << "\n=== TYPE TRAITS DEMO ===" << endl;
+        cout << "is_integral<int>: " << is_integral<int>::value << endl;
+        cout << "is_floating_point<double>: " << is_floating_point<double>::value << endl;
+        cout << "is_same<int, int>: " << is_same<int, int>::value << endl;
+        cout << "is_same<int, double>: " << is_same<int, double>::value << endl;
+        cout << "is_pointer<int*>: " << is_pointer<int*>::value << endl;
+        cout << "is_reference<int&>: " << is_reference<int&>::value << endl;
+        
+        // Limits demo
+        cout << "\n=== NUMERIC LIMITS DEMO ===" << endl;
+        cout << "int max: " << numeric_limits<int>::max() << endl;
+        cout << "int min: " << numeric_limits<int>::min() << endl;
+        cout << "double max: " << numeric_limits<double>::max() << endl;
+        cout << "double epsilon: " << numeric_limits<double>::epsilon() << endl;
+        cout << "float digits: " << numeric_limits<float>::digits << endl;
+        
+        // Math functions demo
+        cout << "\n=== MATH FUNCTIONS DEMO ===" << endl;
+        double x = 2.5;
+        cout << "x = " << x << endl;
+        cout << "sin(x) = " << sin(x) << endl;
+        cout << "cos(x) = " << cos(x) << endl;
+        cout << "tan(x) = " << tan(x) << endl;
+        cout << "exp(x) = " << exp(x) << endl;
+        cout << "log(x) = " << log(x) << endl;
+        cout << "sqrt(x) = " << sqrt(x) << endl;
+        cout << "pow(x, 3) = " << pow(x, 3) << endl;
+        cout << "ceil(x) = " << ceil(x) << endl;
+        cout << "floor(x) = " << floor(x) << endl;
+        cout << "round(x) = " << round(x) << endl;
+        
+        // Assert demo
+        cout << "\n=== ASSERT DEMO ===" << endl;
+        int test_val = 10;
+        assert(test_val > 0);  // This will pass
+        cout << "Assert passed for positive value" << endl;
+        
+        // Call demonstration functions
+        demonstrate_algorithms();
+        demonstrate_containers();
+        demonstrate_regex();
+        demonstrate_chrono();
+        demonstrate_random();
+        demonstrate_threading();
+        demonstrate_modern_features();
+        demonstrate_memory_management();
+        demonstrate_file_io();
+        
+        // Advanced template demo
+        cout << "\n=== ADVANCED TEMPLATE FEATURES ===" << endl;
+        
+        // SFINAE demo
+        cout << "Type checking with SFINAE:" << endl;
+        cout << "is_numeric<int>: " << is_numeric<int>::value << endl;
+        cout << "is_numeric<string>: " << is_numeric<string>::value << endl;
+        
+        // Perfect forwarding demo
+        auto perfect_forwarder = [](auto&& arg) {
+            return forward<decltype(arg)>(arg);
+        };
+        
+        string test_string = "Perfect forwarding";
+        string forwarded = perfect_forwarder(test_string);
+        cout << "Perfect forwarded string: " << forwarded << endl;
+        
+        // Constexpr demo
+        constexpr auto factorial = [](int n) constexpr -> int {
+            return n <= 1 ? 1 : n * factorial(n - 1);
+        };
+        
+        constexpr int fact_5 = factorial(5);
+        cout << "5! = " << fact_5 << " (computed at compile time)" << endl;
+        
+        // Function pointer demo
+        cout << "\n=== FUNCTION POINTERS DEMO ===" << endl;
+        
+        auto add = [](int a, int b) { return a + b; };
+        auto multiply = [](int a, int b) { return a * b; };
+        
+        function<int(int, int)> operation;
+        
+        operation = add;
+        cout << "Add operation: 5 + 3 = " << operation(5, 3) << endl;
+        
+        operation = multiply;
+        cout << "Multiply operation: 5 * 3 = " << operation(5, 3) << endl;
+        
+        // Bind demo
+        auto add_10 = bind(add, placeholders::_1, 10);
+        cout << "Bound function (add 10): 5 + 10 = " << add_10(5) << endl;
+        
+        // Hash demo
+        cout << "\n=== HASH DEMO ===" << endl;
+        hash<string> string_hasher;
+        hash<int> int_hasher;
+        
+        string test_str = "Hello, World!";
+        cout << "Hash of '" << test_str << "': " << string_hasher(test_str) << endl;
+        cout << "Hash of 42: " << int_hasher(42) << endl;
+        
+        // Memory allocation demo
+        cout << "\n=== MEMORY ALLOCATION DEMO ===" << endl;
+        
+        // Raw memory allocation
+        int* raw_array = new int[10];
+        for (int i = 0; i < 10; ++i) {
+            raw_array[i] = i * i;
+        }
+        
+        cout << "Raw array: ";
+        for (int i = 0; i < 10; ++i) {
+            cout << raw_array[i] << " ";
+        }
+        cout << endl;
+        
+        delete[] raw_array;
+        
+        // Aligned allocation (C++17 style simulation)
+        void* aligned_mem = aligned_alloc(64, 1024);  // 64-byte aligned, 1024 bytes
+        if (aligned_mem) {
+            cout << "Aligned memory allocated at: " << aligned_mem << endl;
+            free(aligned_mem);
+        }
+        
+        // Custom allocator demo (simplified)
+        vector<int, allocator<int>> custom_vec(10, 42);
+        cout << "Custom allocated vector size: " << custom_vec.size() << endl;
+        
+        // String manipulation demo
+        cout << "\n=== STRING MANIPULATION DEMO ===" << endl;
+        
+        string str1 = "Hello";
+        string str2 = "World";
+        string combined = str1 + ", " + str2 + "!";
+        
+        cout << "Combined string: " << combined << endl;
+        cout << "Length: " << combined.length() << endl;
+        cout << "Substring (0, 5): " << combined.substr(0, 5) << endl;
+        
+        // Find operations
+        size_t pos = combined.find("World");
+        if (pos != string::npos) {
+            cout << "'World' found at position: " << pos << endl;
+        }
+        
+        // Replace
+        string replaced = combined;
+        replaced.replace(pos, 5, "Universe");
+        cout << "After replacement: " << replaced << endl;
+        
+        // Character classification
+        cout << "\nCharacter classification for 'A':" << endl;
+        char ch = 'A';
+        cout << "isalpha: " << isalpha(ch) << endl;
+        cout << "isdigit: " << isdigit(ch) << endl;
+        cout << "isupper: " << isupper(ch) << endl;
+        cout << "islower: " << islower(ch) << endl;
+        cout << "tolower: " << static_cast<char>(tolower(ch)) << endl;
+        
+        // Iterators demo
+        cout << "\n=== ITERATORS DEMO ===" << endl;
+        
+        vector<int> iter_vec = {1, 2, 3, 4, 5};
+        
+        // Forward iterator
+        cout << "Forward iteration: ";
+        for (auto it = iter_vec.begin(); it != iter_vec.end(); ++it) {
+            cout << *it << " ";
+        }
+        cout << endl;
+        
+        // Reverse iterator
+        cout << "Reverse iteration: ";
+        for (auto it = iter_vec.rbegin(); it != iter_vec.rend(); ++it) {
+            cout << *it << " ";
+        }
+        cout << endl;
+        
+        // Const iterator
+        cout << "Const iteration: ";
+        for (auto it = iter_vec.cbegin(); it != iter_vec.cend(); ++it) {
+            cout << *it << " ";
+        }
+        cout << endl;
+        
+        // Distance and advance
+        auto it1 = iter_vec.begin();
+        auto it2 = iter_vec.end();
+        cout << "Distance from begin to end: " << distance(it1, it2) << endl;
+        
+        advance(it1, 2);
+        cout << "After advancing by 2: " << *it1 << endl;
+        
+        // Final cleanup and summary
+        cout << "\n=== PROGRAM SUMMARY ===" << endl;
+        cout << "✓ Basic C++ features demonstrated" << endl;
+        cout << "✓ Object-oriented programming shown" << endl;
+        cout << "✓ Template metaprogramming examples" << endl;
+        cout << "✓ STL containers and algorithms used" << endl;
+        cout << "✓ Modern C++ features (C++11/14/17/20) included" << endl;
+        cout << "✓ Threading and concurrency demonstrated" << endl;
+        cout << "✓ Memory management with smart pointers" << endl;
+        cout << "✓ Exception handling implemented" << endl;
+        cout << "✓ File I/O operations performed" << endl;
+        cout << "✓ Regular expressions used" << endl;
+        cout << "✓ Mathematical operations shown" << endl;
+        cout << "✓ Type traits and SFINAE demonstrated" << endl;
+        
+        cout << "\nTotal Resource objects created during execution: " 
+             << Resource::getCount() << endl;
+             
+    } catch (const exception& e) {
+        cerr << "An unexpected error occurred: " << e.what() << endl;
+        return 1;
+    } catch (...) {
+        cerr << "An unknown error occurred" << endl;
+        return 1;
+    }
+    
+    cout << "\n=== END OF COMPREHENSIVE C++ DEMONSTRATION ===" << endl;
+    return 0;
+}

@@ -17,6 +17,7 @@
 #include <unordered_map>
 
 #include "Text.h"
+#include "CSVData.h"
 
 // value_t: holds both real and normalized values
 struct value_t {
@@ -63,5 +64,8 @@ std::string identifyLanguageFromPath(char* path,
 std::string identifyLanguageFromClipboard(std::string& clipboard,
                                           LanguageProfiles& languages,
                                           settings_t& globalSettings);
+
+
+void addToTrigramProfile(const std::string& text, TrigramProfile& profile);
 
 #endif

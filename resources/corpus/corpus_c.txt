@@ -1,0 +1,671 @@
+
+
+void game_update (void){
+  // chequeo choques entre entidades y con paredes
+
+	if (hitboxIntersectionCheck(getPlayerBulletEspacio(), getAlienBulletEspacio()) == 1)
+	{ // me fijo si chocaron las balas
+		kill_alien_bullet();
+    kill_player_bullet();
+		bulletenemy_init();
+	}
+
+	int i, j;
+
+	for (i = 0; i < aliens_rows(); i++)
+	{ // me fijo si chocaron los aliens con la bala de la nave
+		for (j = 0; j < aliens_cols(); j++)
+		{if(alien_alive(i, j)==0) continue;
+			if (hitboxIntersectionCheck(getAlienEspacio(i, j), getPlayerBulletEspacio()) == 1)
+			{
+				kill_alien(i, j);						// si chocaron mato alien
+				scoreUpdateAlien(get_alien_type(i, j)); // sumo puntos por alien matado
+				kill_player_bullet();					// inicializo bala del jugador
+			}
+			if (alien_alive(i, j) == 1)
+			{ // si esta vivo el alien
+				if (colisionBordes(getAlienEspacio(i, j)) == 1)
+				{ // me fijo si choco con un borde y le cambio la direcc y lo tiro abajo
+					alienDirection = alienDirection * (-1);
+					alienMatrixMoveDown();
+				}
+			}
+		}
+	}
+
+	for (int k = 0; k < BARRIER_NUMBER; k++)
+	{
+		if (barrier_health(k) != 0)
+		{ // me fijo si la barrera pierde vida
+			if (hitboxIntersectionCheck(getPlayerBulletEspacio(), getBarrierEspacio(k)) == 1)
+			{
+				reduce_barrier_health(k);
+				kill_player_bullet();
+			}
+		}
+
+		if (hitboxIntersectionCheck(getAlienBulletEspacio(), getBarrierEspacio(k)) == 1)
+		{
+			reduce_barrier_health(k);
+			kill_alien_bullet();
+		}
+	}
+
+	if (hitboxIntersectionCheck(getPlayerBulletEspacio(), getNodrizaEspacio()) == 1)
+	{
+		kill_nodriza();
+		scoreUpdateNodriza();
+		kill_player_bullet();
+	}
+
+  if (hitboxIntersectionCheck(getAlienBulletEspacio(), getPlayerEspacio())==1){
+    kill_alien_bullet();
+    //if (player_lives()==0){
+      //exitGame();
+    //}
+    player_lose_lives();
+  }
+
+	if (colisionBordesHorizontal(getNodrizaEspacio()) == 1)
+	{
+		kill_nodriza();
+	}
+
+	if (colisionBordes(getAlienBulletEspacio()) == 1)
+	{
+		alienMatrixMoveDown();
+		alienDirection *= -1;
+	}
+
+	if (colisionBordes(getPlayerBulletEspacio()) == 1)
+	{
+		kill_player_bullet();
+	}
+	check_alienslive();
+	moveEntities();
+}
+
+/*******************************************************************************
+ *******************************************************************************
+						LOCAL FUNCTION DEFINITIONS
+ *******************************************************************************
+ ******************************************************************************/
+/*void exitGame (void){
+  scores_update();// funcion o algo del leaderboard FALTA HACER
+}*/
+
+void update_level (void){
+  static int level = 1;
+  if (level < MAX_LEVEL)
+  {
+    level++;
+  }
+  actual_score += 100; // sumo 100 puntos por pasar de nivel
+}
+
+void scoreUpdateAlien(int type)
+{
+	if (type == 0)
+	{
+		actual_score += 30;
+	}
+	else if (type == 1)
+	{
+		actual_score += 20;
+	}
+	else
+	{
+		actual_score += 10;
+	}
+}
+
+void scoreUpdateNodriza(void)
+{
+	int puntos_nodriza = 50 * (rand() % 6 + 1); // 50, 100, 150, 200, 250, 300
+	actual_score += puntos_nodriza;
+}
+
+void check_alienslive(void){
+  if (getAliveAliens() == 0)
+  {
+    update_level();
+  }
+}
+int colisionBordes (espacio_t ent_a)     // devuelvo 1 si colisiono con un borde, 0 si no, recibo el espacio de una entidad
+{
+	if(ent_a.posX<=0||ent_a.posY<=0) return 1;
+    else if (ent_a.posX+ent_a.hitboxDer>=ANCHO||ent_a.posY+ent_a.hitboxAbajo>=ALTO) return 1;
+    else return 0;
+}
+
+int colisionBordesHorizontal (espacio_t target)
+{
+	if ( target.posX == 0 || target.posX + target.hitboxDer == ANCHO) return 1;
+	else return 0;
+}
+
+int hitboxIntersectionCheck(espacio_t ent_a, espacio_t ent_b)	// devuelvo 1 si hubo colision entre hitbox, 0 sino
+{
+    if ((ent_a.posX>(ent_b.posX+ent_b.hitboxDer))||((ent_a.posX+ent_a.hitboxDer)<ent_b.posX))	// interseccion vacia en x
+	{
+        return 0;
+    }
+    else if((ent_a.posY>(ent_b.posY+ent_b.hitboxAbajo))||((ent_a.posY+ent_a.hitboxAbajo)<ent_b.posY)) // interseccion vacia en y
+    {  
+		return 0;
+    }
+    else // si entra aca hay interseccion en x y en y
+    {  
+		return 1;
+    }
+}
+balaPlayer_t playerBullet = { .alive = 0, .espacio.posX = 0, .espacio.posY = 0, .espacio.hitboxDer = BA_PL_HB_DE, .espacio.hitboxAbajo = BA_PL_HB_AB};
+
+balaAlien_t alienBullet = { .alive = 0, .espacio.posX = 0, .espacio.posY = 0, .espacio.hitboxDer = BA_AL_HB_DE, .espacio.hitboxAbajo = BA_AL_HB_AB};
+
+nave_t nave = { .lives = 0 , .espacio.posX = ANCHO/2, .espacio.posY = ALTO-PL_HB_AB, .espacio.hitboxDer = PL_HB_DE, .espacio.hitboxAbajo = PL_HB_AB };
+
+nodriza_t nodriza={.alive=0, .espacio.posX = 0, .espacio.posY = 0, .espacio.hitboxDer = NO_HB_DE, .espacio.hitboxAbajo = NO_HB_AB};
+
+alien_t alienMatrix [AL_MATRIX_SIZE_Y][AL_MATRIX_SIZE_X];
+
+barrier_t barrierArray [BARRIER_NUMBER];
+
+int alienDirection = 1; 	
+
+int nodrizaDirection = 1;
+
+int level = 0;
+static void alienMoveDown (alien_t* target);
+void alienMoveHorizontal (alien_t* target);
+void init_entities (void)
+{
+	alienMatrixInit();
+	barrierArrayInit();
+	nave.lives = 3;
+	nave.espacio.posX = ANCHO/2-PL_HB_DE/2;
+	nave.espacio.posY = ALTO - PL_HB_AB;
+	nave.espacio.hitboxDer = PL_HB_DE;
+	nave.espacio.hitboxAbajo = PL_HB_AB;
+	nodriza.alive = 0;
+	nodriza.espacio.posX = 0;
+	nodriza.espacio.posY = 0;
+	nodriza.espacio.hitboxDer = NO_HB_DE;
+	nodriza.espacio.hitboxAbajo = NO_HB_AB;
+	playerBullet.alive = 0;
+	playerBullet.espacio.posX = nave.espacio.posX;
+	playerBullet.espacio.posY = nave.espacio.posY - BA_PL_HB_AB;
+	playerBullet.espacio.hitboxDer = BA_PL_HB_DE;
+	playerBullet.espacio.hitboxAbajo = BA_PL_HB_AB;
+	alienBullet.alive = 1;
+	bulletenemy_init();
+	alienBullet.espacio.hitboxDer = BA_AL_HB_DE;
+	alienBullet.espacio.hitboxAbajo = BA_AL_HB_AB;
+	alienDirection = 1;
+	nodrizaDirection = 1;
+	fprintf (stderr,"posicion nave: %d,%d - posicion alien1: %d,%d - posicion barrera:%d,%d", nave.espacio.posX,nave.espacio.posY, alienMatrix[0][0].espacio.posX, alienMatrix[0][0].espacio.posY, barrierArray[0].espacio.posX+1, barrierArray[0].espacio.posY+1);
+}
+
+void alienMatrixInit (void)
+{
+	int i,j;
+	for ( i=0 ; i < AL_MATRIX_SIZE_X ; i++ )
+	{
+		for ( j=0 ; j < AL_MATRIX_SIZE_Y ; j++)
+		{
+			alienMatrix[j][i].alive = 1;
+			alienMatrix[j][i].espacio.hitboxAbajo = AL_HB_AB;
+			alienMatrix[j][i].espacio.hitboxDer = AL_HB_DE;
+			alienMatrix[j][i].espacio.posX = AL_MATRIX_STARTPOS_X + i*AL_SEP_X;
+			alienMatrix[j][i].espacio.posY = AL_MATRIX_STARTPOS_Y - j*AL_SEP_Y;
+			if (j==0) alienMatrix[j][i].type = 0;
+			else if (j < 3) alienMatrix[j][i].type = 1;
+			else alienMatrix[j][i].type = 2;	
+		}
+	}
+}
+
+void barrierArrayInit (void)
+{
+	int i;
+	for ( i=0 ; i < BARRIER_NUMBER ; i++)
+	{
+		barrierArray[i].health = 30;
+		barrierArray[i].espacio.hitboxAbajo = BARRIER_HB_AB;
+		barrierArray[i].espacio.hitboxDer = BARRIER_HB_DE;
+		barrierArray[i].espacio.posX = BARRIER_STARTPOS_X + i*BARRIER_SEP;
+		barrierArray[i].espacio.posY = BARRIER_STARTPOS_Y;
+	}
+}
+
+
+void bulletenemy_init(void){
+	alienBullet.alive = 0;
+	int a=rand()%AL_MATRIX_SIZE_Y;
+	int b=rand()%AL_MATRIX_SIZE_X;
+	if(alienMatrix[a][b].alive==0){
+		while(alienMatrix[a][b].alive==0){
+			a=rand()%AL_MATRIX_SIZE_Y;
+			b=rand()%AL_MATRIX_SIZE_X;
+		}
+	}
+	alienBullet.espacio.posX= alienMatrix[a][b].espacio.posX; //posicion random de un alien vivo
+	alienBullet.espacio.posY= alienMatrix[a][b].espacio.posY;
+}
+
+/************************ FUNCIONES DE MOVIMIENTO *********************** */
+
+void playerBulletMove (void)
+{
+	if (playerBullet.alive == 0) return;
+	else playerBullet.espacio.posY -= BA_PL_TICK_MOVEMENT;
+}
+
+void alienBulletMove (void)
+{
+	if (alienBullet.alive == 0) return;
+	else alienBullet.espacio.posY += BA_AL_TICK_MOVEMENT;
+}
+
+void alienMatrixMoveDown (void)
+{
+	int i,j;
+	for (i = 0; i < AL_MATRIX_SIZE_X; i++)
+	{
+		for (j = 0; j < AL_MATRIX_SIZE_Y; j++)
+		{
+			alienMoveDown(&(alienMatrix[j][i]));
+		}
+	}
+}
+
+void alienMatrixMoveHorizontal (void)
+{
+	int i,j;
+	for (i = 0; i < AL_MATRIX_SIZE_X; i++)
+	{
+		for (j = 0; j < AL_MATRIX_SIZE_Y; j++)
+		{
+			alienMoveHorizontal(&(alienMatrix[j][i]));
+		}
+	}
+}
+
+void nodrizaMove (void)
+{
+	if (nodriza.alive) nodriza.espacio.posX += (NO_TICK_MOVEMENT*nodrizaDirection);
+	else return;
+}
+
+void playerMoveLeft (void)
+{
+	if (nave.espacio.posX < PL_TICK_MOVEMENT) return;
+	nave.espacio.posX -= (PL_TICK_MOVEMENT);
+}
+
+void playerMoveRight (void)
+{
+	if (nave.espacio.posX > (ANCHO)) return;
+	nave.espacio.posX += (PL_TICK_MOVEMENT);
+}
+
+void moveEntities (void)
+{
+
+	playerBulletMove();
+	alienBulletMove();
+	nodrizaMove();
+}
+
+void alienMoveDown (alien_t* target)
+{
+	(*target).espacio.posY += (AL_SEP_Y + AL_HB_AB);
+}
+
+void alienMoveHorizontal (alien_t* target)
+{
+	(*target).espacio.posX += (AL_TICK_MOVEMENT*alienDirection + level);
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_LIBROS 100
+#define MAX_USUARIOS 50
+#define MAX_TITULO 100
+#define MAX_AUTOR 50
+#define MAX_NOMBRE 50
+
+typedef struct {
+    char titulo[MAX_TITULO];
+    char autor[MAX_AUTOR];
+    int anio;
+    int disponible; // 1 = disponible, 0 = prestado
+} Libro;
+
+typedef struct {
+    char nombre[MAX_NOMBRE];
+    int id;
+    int librosPrestados[MAX_LIBROS];
+    int totalPrestados;
+} Usuario;
+
+Libro biblioteca[MAX_LIBROS];
+Usuario usuarios[MAX_USUARIOS];
+int totalLibros = 0;
+int totalUsuarios = 0;
+
+// Funciones de biblioteca
+void agregarLibro() {
+    if (totalLibros >= MAX_LIBROS) {
+        printf("La biblioteca está llena.\n");
+        return;
+    }
+    printf("Ingrese título del libro: ");
+    getchar(); // limpiar buffer
+    fgets(biblioteca[totalLibros].titulo, MAX_TITULO, stdin);
+    biblioteca[totalLibros].titulo[strcspn(biblioteca[totalLibros].titulo, "\n")] = '\0';
+
+    printf("Ingrese autor: ");
+    fgets(biblioteca[totalLibros].autor, MAX_AUTOR, stdin);
+    biblioteca[totalLibros].autor[strcspn(biblioteca[totalLibros].autor, "\n")] = '\0';
+
+    printf("Ingrese año de publicación: ");
+    scanf("%d", &biblioteca[totalLibros].anio);
+
+    biblioteca[totalLibros].disponible = 1;
+    totalLibros++;
+    printf("Libro agregado correctamente.\n");
+}
+
+void listarLibros() {
+    printf("\nLibros en la biblioteca:\n");
+    for (int i = 0; i < totalLibros; i++) {
+        printf("[%d] %s - %s (%d) %s\n", i + 1, biblioteca[i].titulo, biblioteca[i].autor,
+               biblioteca[i].anio, biblioteca[i].disponible ? "Disponible" : "Prestado");
+    }
+}
+
+int buscarLibroPorTitulo(char *titulo) {
+    for (int i = 0; i < totalLibros; i++) {
+        if (strcasecmp(biblioteca[i].titulo, titulo) == 0)
+            return i;
+    }
+    return -1;
+}
+
+// Funciones de usuario
+void registrarUsuario() {
+    if (totalUsuarios >= MAX_USUARIOS) {
+        printf("Máximo de usuarios alcanzado.\n");
+        return;
+    }
+    printf("Ingrese nombre del usuario: ");
+    getchar(); // limpiar buffer
+    fgets(usuarios[totalUsuarios].nombre, MAX_NOMBRE, stdin);
+    usuarios[totalUsuarios].nombre[strcspn(usuarios[totalUsuarios].nombre, "\n")] = '\0';
+    usuarios[totalUsuarios].id = totalUsuarios + 1;
+    usuarios[totalUsuarios].totalPrestados = 0;
+    totalUsuarios++;
+    printf("Usuario registrado con éxito.\n");
+}
+
+void listarUsuarios() {
+    printf("\nUsuarios registrados:\n");
+    for (int i = 0; i < totalUsuarios; i++) {
+        printf("[%d] %s - Libros prestados: %d\n", usuarios[i].id, usuarios[i].nombre,
+               usuarios[i].totalPrestados);
+    }
+}
+
+int buscarUsuarioPorID(int id) {
+    for (int i = 0; i < totalUsuarios; i++) {
+        if (usuarios[i].id == id)
+            return i;
+    }
+    return -1;
+}
+
+// Funciones de préstamo
+void prestarLibro() {
+    char titulo[MAX_TITULO];
+    int idUsuario;
+
+    printf("Ingrese ID del usuario: ");
+    scanf("%d", &idUsuario);
+    int idxUsuario = buscarUsuarioPorID(idUsuario);
+    if (idxUsuario == -1) {
+        printf("Usuario no encontrado.\n");
+        return;
+    }
+
+    printf("Ingrese título del libro a prestar: ");
+    getchar(); // limpiar buffer
+    fgets(titulo, MAX_TITULO, stdin);
+    titulo[strcspn(titulo, "\n")] = '\0';
+
+    int idxLibro = buscarLibroPorTitulo(titulo);
+    if (idxLibro == -1) {
+        printf("Libro no encontrado.\n");
+        return;
+    }
+
+    if (!biblioteca[idxLibro].disponible) {
+        printf("El libro ya está prestado.\n");
+        return;
+    }
+
+    biblioteca[idxLibro].disponible = 0;
+    usuarios[idxUsuario].librosPrestados[usuarios[idxUsuario].totalPrestados] = idxLibro;
+    usuarios[idxUsuario].totalPrestados++;
+    printf("Libro prestado exitosamente.\n");
+}
+
+void devolverLibro() {
+    char titulo[MAX_TITULO];
+    int idUsuario;
+
+    printf("Ingrese ID del usuario: ");
+    scanf("%d", &idUsuario);
+    int idxUsuario = buscarUsuarioPorID(idUsuario);
+    if (idxUsuario == -1) {
+        printf("Usuario no encontrado.\n");
+        return;
+    }
+
+    printf("Ingrese título del libro a devolver: ");
+    getchar();
+    fgets(titulo, MAX_TITULO, stdin);
+    titulo[strcspn(titulo, "\n")] = '\0';
+
+    int idxLibro = buscarLibroPorTitulo(titulo);
+    if (idxLibro == -1) {
+        printf("Libro no encontrado.\n");
+        return;
+    }
+
+    // Buscar libro en la lista de préstamos del usuario
+    int found = 0;
+    for (int i = 0; i < usuarios[idxUsuario].totalPrestados; i++) {
+        if (usuarios[idxUsuario].librosPrestados[i] == idxLibro) {
+            found = 1;
+            for (int j = i; j < usuarios[idxUsuario].totalPrestados - 1; j++) {
+                usuarios[idxUsuario].librosPrestados[j] = usuarios[idxUsuario].librosPrestados[j + 1];
+            }
+            usuarios[idxUsuario].totalPrestados--;
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Este libro no estaba prestado a este usuario.\n");
+        return;
+    }
+
+    biblioteca[idxLibro].disponible = 1;
+    printf("Libro devuelto correctamente.\n");
+}
+
+// Menú principal
+void menu() {
+    int opcion;
+    do {
+        printf("\n=== Biblioteca Asturiana ===\n");
+        printf("1. Agregar libro\n");
+        printf("2. Listar libros\n");
+        printf("3. Registrar usuario\n");
+        printf("4. Listar usuarios\n");
+        printf("5. Prestar libro\n");
+        printf("6. Devolver libro\n");
+        printf("0. Salir\n");
+        printf("Ingrese opción: ");
+        scanf("%d", &opcion);
+
+        switch (opcion) {
+            case 1:
+                agregarLibro();
+                break;
+            case 2:
+                listarLibros();
+                break;
+            case 3:
+                registrarUsuario();
+                break;
+            case 4:
+                listarUsuarios();
+                break;
+            case 5:
+                prestarLibro();
+                break;
+            case 6:
+                devolverLibro();
+                break;
+            case 0:
+                printf("Saliendo...\n");
+                break;
+            default:
+                printf("Opción inválida.\n");
+        }
+    } while (opcion != 0);
+}
+
+int main() {
+    menu();
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    char *nombre;
+    int edad;
+    float promedio;
+} Estudiante;
+
+typedef struct {
+    Estudiante **estudiantes; // puntero a array de punteros a estudiantes
+    size_t total;
+} ListaEstudiantes;
+
+// Función para crear un estudiante dinámicamente
+Estudiante* crearEstudiante(const char *nombre, int edad, float promedio) {
+    Estudiante *est = (Estudiante *)malloc(sizeof(Estudiante));
+    if (!est) {
+        perror("Error al asignar memoria para estudiante");
+        exit(1);
+    }
+    est->edad = edad;
+    est->promedio = promedio;
+    est->nombre = (char *)malloc(strlen(nombre) + 1);
+    if (!est->nombre) {
+        perror("Error al asignar memoria para nombre");
+        free(est);
+        exit(1);
+    }
+    strcpy(est->nombre, nombre);
+    return est;
+}
+
+// Función para inicializar lista de estudiantes
+void inicializarLista(ListaEstudiantes *lista) {
+    lista->estudiantes = NULL;
+    lista->total = 0;
+}
+
+// Agregar estudiante a la lista
+void agregarEstudiante(ListaEstudiantes *lista, Estudiante *est) {
+    lista->estudiantes = (Estudiante **)realloc(lista->estudiantes, (lista->total + 1) * sizeof(Estudiante *));
+    if (!lista->estudiantes) {
+        perror("Error al realocar memoria para lista de estudiantes");
+        exit(1);
+    }
+    lista->estudiantes[lista->total] = est;
+    lista->total++;
+}
+
+// Mostrar estudiantes
+void mostrarEstudiantes(const ListaEstudiantes *lista) {
+    printf("\nLista de Estudiantes (%zu):\n", lista->total);
+    for (size_t i = 0; i < lista->total; i++) {
+        printf("[%zu] Nombre: %s, Edad: %d, Promedio: %.2f\n", i + 1,
+               lista->estudiantes[i]->nombre,
+               lista->estudiantes[i]->edad,
+               lista->estudiantes[i]->promedio);
+    }
+}
+
+// Eliminar estudiante por índice
+void eliminarEstudiante(ListaEstudiantes *lista, size_t indice) {
+    if (indice >= lista->total) {
+        printf("Índice inválido.\n");
+        return;
+    }
+    free(lista->estudiantes[indice]->nombre);
+    free(lista->estudiantes[indice]);
+
+    for (size_t i = indice; i < lista->total - 1; i++) {
+        lista->estudiantes[i] = lista->estudiantes[i + 1];
+    }
+
+    lista->total--;
+    lista->estudiantes = (Estudiante **)realloc(lista->estudiantes, lista->total * sizeof(Estudiante *));
+    if (lista->total > 0 && !lista->estudiantes) {
+        perror("Error al reducir memoria de lista");
+        exit(1);
+    }
+}
+
+// Liberar toda la memoria de la lista
+void liberarLista(ListaEstudiantes *lista) {
+    for (size_t i = 0; i < lista->total; i++) {
+        free(lista->estudiantes[i]->nombre);
+        free(lista->estudiantes[i]);
+    }
+    free(lista->estudiantes);
+    lista->estudiantes = NULL;
+    lista->total = 0;
+}
+
+int main() {
+    ListaEstudiantes lista;
+    inicializarLista(&lista);
+
+    // Agregamos algunos estudiantes
+    agregarEstudiante(&lista, crearEstudiante("Ana", 20, 8.5));
+    agregarEstudiante(&lista, crearEstudiante("Luis", 22, 9.1));
+    agregarEstudiante(&lista, crearEstudiante("Marta", 19, 7.8));
+
+    mostrarEstudiantes(&lista);
+
+    // Eliminamos un estudiante
+    printf("\nEliminando estudiante 2...\n");
+    eliminarEstudiante(&lista, 1);
+
+    mostrarEstudiantes(&lista);
+
+    // Liberamos toda la memoria
+    liberarLista(&lista);
+
+    return 0;
+}
