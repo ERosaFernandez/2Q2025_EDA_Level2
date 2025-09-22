@@ -95,3 +95,4 @@ El texto se encuentra completamente en mayúsculas y contiene puntuación extens
 ## Bonus points
 
 Se crearon perfiles de trigramas para los idiomas guaraní, catalán y asturiano a partir de sus respectivos corpus en UTF-8. Cada perfil se almacenó en la carpeta trigrams y los códigos de idioma se añadieron a languagecode_names_es.csv, permitiendo identificar correctamente los textos en estas lenguas.
+Además, se generaron perfiles para los lenguajes de programación C, C++ y Python. No obstante, debido a la gran similitud entre sus estructuras y sintaxis, el sistema no podía distinguirlos de manera consistente. De esta forma, al analizar un código fuente, se podía determinar que correspondía a algún lenguaje computacional, pero la identificación oscilaba entre estas tres opciones sin una diferenciación inequívoca. Debido a esta falla, terminamos optando por no incluirlos.
