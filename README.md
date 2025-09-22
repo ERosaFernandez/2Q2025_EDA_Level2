@@ -2,9 +2,8 @@
 
 ## Integrantes del grupo y contribución al trabajo de cada integrante
 
-* [Nombre]: [contribución]
+* [Sofia Nasello]: [Definicion de algunas de las funciones de Lequel.cpp, escritura del read me, implementacion del bonus point: 3 idiomas nuevos]
 
-[completar]
 
 se cambia main para usar file* en vez de text para archivos
 
@@ -39,7 +38,7 @@ El texto esta en suajili.
 
 Այժմ նա յուր կինտոյի արհեստով ժառանգած Ճանճուր մականունը կցելով յուր հոր՝ Օհանեսի անվան հետ, կոչվում է «Թիֆլիսի պատվավոր քաղաքացի Ճանճուր Իվանիչ»։ Այդ անունով ևս մենք պարտավորվում ենք նրան ծանոթացնել մեր ընթերցողներին։
 
-El texto esta en armenio
+El texto esta en armenio.
 
 6. ¿En qué idioma está el siguiente texto?
 
@@ -51,7 +50,7 @@ El texto esta en turco.
 
 ᎤᎵᏍᏔᏴᏗ ᎦᎵᏙᏗ ᏭᎷᏤᎢ, ᎤᏗᏔᎮ ᎦᏁᎲ, ᎤᏲᏏᏍᎩ ᎤᏗᏔᎮ ᎤᏅᏗ ᏃᎴ ᎤᎩᏍᏙᎡ ᏑᎾᎴ ᎠᎩᏍᏗ ᎤᏂᏑᎸᏓ. ᎣᏍᏓ ᏄᎵᏍᏔᏁᎮ ᎤᏩᏌ ᎤᏪᏅᏒ ᎡᏙᎲ. ᎦᏅᏆᎶᏍᏗ ᏭᏴᎮ ᏣᏄᏏ ᏃᎴ ᏣᏁᎳ ᎠᏂᏎᏂᏏ ᏴᎩ, ᎣᏍᏓ ᏄᏩᏁᎴ ᎠᏦᏴ.
 
-El texto esta en cheroqui
+El texto esta en cheroqui.
 
 8. ¿En qué idioma está el siguiente texto?
 
@@ -63,13 +62,13 @@ El texto esta en arabe.
 
 ગુજરાતી સંસ્કૃત ભાષામાંથી વિકસિત થયેલી આધુનિક ઈન્ડો-આર્યન ભાષા છે. પરંપરાગત રીતે ૩ ઐતિહાસિક તબક્કાઓ પ્રમાણે ઈન્ડો-આર્યન ભાષાઓ વચ્ચે ભેદ કરાય છે.
 
-El texto esta en guyarati
+El texto esta en guyarati.
 
 10. ¿En qué idioma está el siguiente texto?
 
 Al Seicento appartiene il primo trattato dedicato non ai volgari italiani o a uno o più di tali volgari, ma alla lingua italiana in quanto tale: Delle osservazioni della lingua italiana di Marcantonio Mambelli, detto il Cinonio.
 
-El texto esta en italiano
+El texto esta en italiano.
 
 11. El siguiente texto fue escrito por Robert Burns en escocés. ¿Qué dice Lequel? ¿Qué falla? Justifica por qué ocurre lo que ocurre.
 
@@ -95,4 +94,4 @@ El texto se encuentra completamente en mayúsculas y contiene puntuación extens
 
 ## Bonus points
 
-[completar]
+Se crearon perfiles de trigramas para los idiomas guaraní, catalán y asturiano a partir de sus respectivos corpus en UTF-8. Cada perfil se almacenó en la carpeta trigrams y los códigos de idioma se añadieron a languagecode_names_es.csv, permitiendo identificar correctamente los textos en estas lenguas.

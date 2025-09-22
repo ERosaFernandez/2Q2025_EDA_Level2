@@ -115,21 +115,5 @@ int main()
                          "ast");
     addLanguageToNamesCSV("ast", "Asturiano", "resources/languagecode_names_es.csv");
 
-    // Creates profiles for programming languages
-    buildLanguageProfile("resources/corpus/corpus_c.txt",
-                         "resources/trigrams/c.csv",
-                         "c");
-    addLanguageToNamesCSV("c", "C", "resources/languagecode_names_es.csv");
-
-    buildLanguageProfile("resources/corpus/corpus_cpp.txt",
-                         "resources/trigrams/cpp.csv",
-                         "cpp");
-    addLanguageToNamesCSV("cpp", "C++", "resources/languagecode_names_es.csv");
-
-    buildLanguageProfile("resources/corpus/corpus_python.txt",
-                         "resources/trigrams/py.csv",
-                         "py");
-    addLanguageToNamesCSV("py", "Python", "resources/languagecode_names_es.csv");
-
     return 0;
 }
