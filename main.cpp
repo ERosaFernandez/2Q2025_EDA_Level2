@@ -301,8 +301,6 @@ int main(int, char*[]) {
             timer_start = timestamp_millis_high_resolution();
 
             if (droppedFiles.count == 1) {
-                Text text;
-                getTextFromFile(droppedFiles.paths[0], text);
 
                 languageCode =
                     identifyLanguageFromPath(droppedFiles.paths[0], languages, globalSettings);
