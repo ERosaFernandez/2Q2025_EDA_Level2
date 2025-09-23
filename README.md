@@ -4,8 +4,7 @@
 
 * [Sofia Nasello]: [Definicion de algunas de las funciones de Lequel.cpp, escritura del read me, implementacion del bonus point: 3 idiomas nuevos]
 
-
-se cambia main para usar file* en vez de text para archivos
+* [Enzo Nicolás Rosa Fernandez]: [Definicion de algoritmos de comparacion adicional e iteracion nativa UTF-8, disenio de interfaz grafica, adicion de restricciones modificables]
 
 
 ## Respuestas del enunciado
@@ -54,7 +53,7 @@ El texto esta en cheroqui.
 
 8. ¿En qué idioma está el siguiente texto?
 
-ُیعتقد بأن ضابطة في الجیش البریطاني تدعى بریت تشاندي أصبحت أولامرأة من أصول آسیویة ُتكملُ رحلة استكشافیة فردیة عبر .القارة القطبیة الجنوبی  
+ُیعتقد بأن ضابطة في الجیش البریطاني تدعى بریت تشاندي أصبحت أولامرأة من أصول آسیویة ُتكملُ رحلة استكشافیة فردیة عبر .القارة القطبیة الجنوبی
 
 El texto esta en arabe.
 
@@ -96,3 +95,12 @@ El texto se encuentra completamente en mayúsculas y contiene puntuación extens
 
 Se crearon perfiles de trigramas para los idiomas guaraní, catalán y asturiano a partir de sus respectivos corpus en UTF-8. Cada perfil se almacenó en la carpeta trigrams y los códigos de idioma se añadieron a languagecode_names_es.csv, permitiendo identificar correctamente los textos en estas lenguas.
 Además, se generaron perfiles para los lenguajes de programación C, C++ y Python. No obstante, debido a la gran similitud entre sus estructuras y sintaxis, el sistema no podía distinguirlos de manera consistente. De esta forma, al analizar un código fuente, se podía determinar que correspondía a algún lenguaje computacional, pero la identificación oscilaba entre estas tres opciones sin una diferenciación inequívoca. Debido a esta falla, terminamos optando por no incluirlos.
+
+Se opto por iterar de forma nativa el texto UTF-8 para evitar la constante conversion de Unicode a wstring y de wstring a string para optimizar el procedimiento.
+Se cambiaron los map por unordered_map para incrementar la velocidad de acceso de elementos.
+Se agregaron restricciones y una configuracion que puede modificarse a traves de la interfaz grafica. Permite imponer un limite de trigramas a procesar y de lineas a leer para reducir el tiempo, aunque puede disminuir la precision.
+Se agregaron 2 nuevos algoritmos de similitud: Similitud de Jaccard Ponderada y Similitud de Cavnart Trenkle (Ver lequel.cpp para citas a articulos), para comparar las velocidades y precisiones de los 3 modelos. Si bien el algoritmo de Jaccard, en papel, parece mejor que la Similitud Coseno, al no estar en codiciones favorables en este codigo, resulto ser el mas lento e impreciso de los 3. Cavnart Trenkle, por otro lado, resulto ser muy preciso y rapido, posiblemente incluso mejor que coseno con textos extensos.
+Mediante un define en lequel.h (NORMAL_TOGGLE_ENABLE), se puede intercambiar la barra de limite de trigramas por un toggle entre usar frecuencias absolutas o normalizadas. Si bien en similitud coseno estan fijos en normalizados, cabe destacar que en ciertas condiciones, los otros 2 algoritmos pueden funcionar sin necesidad de normalizar las frecuencias. Esto implica tambien mantener 2 valores por trigrama correspondiente a las frecuencias absolutas o normalizadas, que ocupan mas espacio. Por eso se lo dejo detras de un define, no genero una ganancia importante y la perdida de precision (a pesar que en ciertas condiciones no pasa) hace que no valga la pena mantener activo dicha configuracion. Puede descomentarse la linea para habilitar la funcion, ya que aun asi funciona correctamente.
+Se dividio la carga de texto segun si proviene de la "clipboard" o de un archivo. Cabe mencionar que la forma del archivo produce un cuello de botella al copiar strings que representan cada linea para iterar linea por linea. El metodo de "clipboard" por otra parte no sufre de dicho inconveniente.
+Se agregaron timers en el programa, para medir el tiempo que le toma al mismo procesar e identificar una porcion de texto. Permite diferenciar visualmente las diferencias que se obtienen de modificar las distintas opciones que ofrece la interfaz grafica.
+La velocidad del programa resulta variable segun los parametros que inserte el usuario. Para analisis mas rapidos se prefiere la similitud Cavnart Trenkle con 20-50 trigramas y 10-30 lineas (aunque ha logrado identificar lenguajes en condiciones mucho mas extremas, como 10 trigramas y 3 lineas). Velocidades medias (aunque no tan distantes de Cavnart) pueden verse con la similitud coseno con 50-200 trigramas y +30 lineas. Por ultimo, si se opta por el metodo de Jaccard, se recomiendan +100 trigramas y +30 lineas, ya que suele presentar comportamientos erraticos y suele requerir de mucha mas informacion para llegar a una buena conclusion.

@@ -28,7 +28,11 @@ struct buttons_t {
     Rectangle algoCosine;
     Rectangle algoJaccard;
     Rectangle algoCavnarTrenkle;
+#ifdef NORMAL_TOGGLE_ENABLE
     Rectangle toggleNormalize;
+#else
+    Rectangle trigramLimit;
+#endif
     Rectangle lineLimit;
 };
 
@@ -77,7 +81,11 @@ bool loadLanguagesData(unordered_map<string, string>& languageCodeNames,
             string trigram = fields[0];
             float frequency = (float)stoi(fields[1]);
 
+#ifdef NORMAL_TOGGLE_ENABLE
             language.trigramProfile[trigram].real = frequency;
+#else
+            language.trigramProfile[trigram] = frequency;
+#endif
         }
 
         normalizeTrigramProfile(language.trigramProfile);
@@ -98,6 +106,12 @@ unsigned long long timestamp_millis() {
     return ms.time_since_epoch().count();
 }
 
+double timestamp_millis_high_resolution() {
+    auto now = std::chrono::high_resolution_clock::now();
+    auto ns = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
+    return ns.time_since_epoch().count() / 1000000.0;  // Convert ns to ms
+}
+
 /**
  * @name setupButtons
  * @brief Sets the position, height and width for all buttons
@@ -109,23 +123,19 @@ void setupButtons(buttons_t& buttons) {
     buttons.algoCosine.y = buttons.algoCavnarTrenkle.y;
     buttons.algoJaccard.y = buttons.algoCavnarTrenkle.y;
 
-    buttons.toggleNormalize.y = 220;
     buttons.lineLimit.y = 220;
 
     buttons.algoCavnarTrenkle.height = 50;
     buttons.algoCosine.height = buttons.algoCavnarTrenkle.height;
     buttons.algoJaccard.height = buttons.algoCavnarTrenkle.height;
 
-    buttons.toggleNormalize.height = buttons.algoJaccard.height;
-    buttons.lineLimit.height = buttons.toggleNormalize.height;
+    buttons.lineLimit.height = buttons.algoJaccard.height;
 
     buttons.algoCavnarTrenkle.width = 265;
     buttons.algoCosine.width = buttons.algoCavnarTrenkle.width - 135;
     buttons.algoJaccard.width = buttons.algoCavnarTrenkle.width - 120;
 
-    buttons.toggleNormalize.width = buttons.algoCavnarTrenkle.width - 45;
-
-    buttons.lineLimit.width = buttons.toggleNormalize.width;
+    buttons.lineLimit.width = buttons.algoCavnarTrenkle.width - 45;
 
     buttons.algoCavnarTrenkle.x = 20;
     buttons.algoCosine.x =
@@ -133,9 +143,19 @@ void setupButtons(buttons_t& buttons) {
     buttons.algoJaccard.x = buttons.algoCavnarTrenkle.x + buttons.algoCavnarTrenkle.width +
                             buttons.algoCosine.width - 2 * LINE_WIDTH;
 
-    buttons.toggleNormalize.x = buttons.algoCavnarTrenkle.x;
+    buttons.lineLimit.x = buttons.algoCavnarTrenkle.x + buttons.algoCavnarTrenkle.width + 160;
 
-    buttons.lineLimit.x = buttons.toggleNormalize.x + buttons.toggleNormalize.width + 150;
+#ifdef NORMAL_TOGGLE_ENABLE
+    buttons.toggleNormalize.y = 220;
+    buttons.toggleNormalize.height = buttons.algoJaccard.height;
+    buttons.toggleNormalize.width = buttons.algoCavnarTrenkle.width - 45;
+    buttons.toggleNormalize.x = buttons.algoCavnarTrenkle.x;
+#else
+    buttons.trigramLimit.y = 220;
+    buttons.trigramLimit.height = buttons.algoJaccard.height;
+    buttons.trigramLimit.width = buttons.algoCavnarTrenkle.width - 45;
+    buttons.trigramLimit.x = buttons.algoCavnarTrenkle.x;
+#endif
 }
 
 /**
@@ -150,7 +170,11 @@ void drawButtons(buttons_t& buttons, settings_t& globalSettings) {
     Color Cosine;
     Color Jaccard;
     static char lineBuffer[8];
+    static char trigramBuffer[8];
     sprintf(lineBuffer, "%d", globalSettings.lineLimit);
+#ifndef NORMAL_TOGGLE_ENABLE
+    sprintf(trigramBuffer, "%d", globalSettings.trigramLimit);
+#endif
 
     switch (globalSettings.algorithmSetting) {
         case ALGORITHM_CAVNARTRENKLE:
@@ -198,6 +222,7 @@ void drawButtons(buttons_t& buttons, settings_t& globalSettings) {
     DrawText("Coseno", buttons.algoCosine.x + 10, buttons.algoCosine.y + 10, 30, Cosine);
     DrawText("Jaccard", buttons.algoJaccard.x + 10, buttons.algoJaccard.y + 10, 30, Jaccard);
 
+#ifdef NORMAL_TOGGLE_ENABLE
     DrawText("Valores de frecuencia",
              buttons.toggleNormalize.x,
              buttons.toggleNormalize.y - 30,
@@ -216,6 +241,15 @@ void drawButtons(buttons_t& buttons, settings_t& globalSettings) {
         DrawText(
             "Reales", buttons.toggleNormalize.x + 60, buttons.toggleNormalize.y + 10, 30, BROWN);
     }
+#else
+    DrawText("Límite de trigramas (scroll)",
+             buttons.trigramLimit.x,
+             buttons.trigramLimit.y - 30,
+             28,
+             BROWN);
+    DrawRectangleLinesEx(buttons.trigramLimit, LINE_WIDTH, BROWN);
+    DrawText(trigramBuffer, buttons.trigramLimit.x + 15, buttons.trigramLimit.y + 10, 30, BROWN);
+#endif
 
     DrawText("Límite de líneas (scroll)", buttons.lineLimit.x, buttons.lineLimit.y - 30, 28, BROWN);
     DrawRectangleLinesEx(buttons.lineLimit, LINE_WIDTH, BROWN);
@@ -235,7 +269,7 @@ int main(int, char*[]) {
 
     setupButtons(buttons);
 
-    unsigned long long timer_start = 0, timer_end = 0;
+    double timer_start = 0, timer_end = 0;
 
     float mouseWheel;
 
@@ -256,16 +290,15 @@ int main(int, char*[]) {
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_V) && (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL) ||
                                     IsKeyDown(KEY_LEFT_SUPER) || IsKeyDown(KEY_RIGHT_SUPER))) {
-
+            timer_start = timestamp_millis_high_resolution();
             std::string clipboard = GetClipboardText();
-            timer_start = timestamp_millis();
             languageCode = identifyLanguageFromClipboard(clipboard, languages, globalSettings);
-            timer_end = timestamp_millis();
+            timer_end = timestamp_millis_high_resolution();
         }
 
         if (IsFileDropped()) {
-            timer_start = timestamp_millis();
             FilePathList droppedFiles = LoadDroppedFiles();
+            timer_start = timestamp_millis_high_resolution();
 
             if (droppedFiles.count == 1) {
                 Text text;
@@ -273,7 +306,7 @@ int main(int, char*[]) {
 
                 languageCode =
                     identifyLanguageFromPath(droppedFiles.paths[0], languages, globalSettings);
-                timer_end = timestamp_millis();
+                timer_end = timestamp_millis_high_resolution();
 
                 UnloadDroppedFiles(droppedFiles);
             }
@@ -287,6 +320,7 @@ int main(int, char*[]) {
                 globalSettings.algorithmSetting = ALGORITHM_COSINE;
             else if (CheckCollisionPointRec(mousePosition, buttons.algoJaccard))
                 globalSettings.algorithmSetting = ALGORITHM_JACCARD;
+#ifdef NORMAL_TOGGLE_ENABLE
             else if (CheckCollisionPointRec(mousePosition, buttons.toggleNormalize))
                 if (globalSettings.algorithmSetting != ALGORITHM_COSINE) {
                     if (globalSettings.valueProcessingSetting == VALUE_NORMALIZE)
@@ -294,6 +328,7 @@ int main(int, char*[]) {
                     else
                         globalSettings.valueProcessingSetting = VALUE_NORMALIZE;
                 }
+#endif
         }
 
         if ((mouseWheel = GetMouseWheelMove())) {
@@ -320,15 +355,44 @@ int main(int, char*[]) {
                     else
                         globalSettings.lineLimit -= 1000;
                 }
-                // globalSettings.lineLimit -= 10;
 
                 if (globalSettings.lineLimit == 0)
                     globalSettings.lineLimit = 1;
             }
+#ifndef NORMAL_TOGGLE_ENABLE
+            else if (CheckCollisionPointRec(mousePosition, buttons.trigramLimit)) {
+                if (mouseWheel > 0) {
+                    if (globalSettings.trigramLimit < MIN_LIMIT)
+                        globalSettings.trigramLimit += 1;
+                    else if (globalSettings.trigramLimit < MED_LIMIT)
+                        globalSettings.trigramLimit += 10;
+                    else if (globalSettings.trigramLimit < HIGH_LIMIT)
+                        globalSettings.trigramLimit += 100;
+                    else
+                        globalSettings.trigramLimit += 1000;
+                }
+
+                else {
+                    if (globalSettings.trigramLimit <= MIN_LIMIT)
+                        globalSettings.trigramLimit -= 1;
+                    else if (globalSettings.trigramLimit <= MED_LIMIT)
+                        globalSettings.trigramLimit -= 10;
+                    else if (globalSettings.trigramLimit <= HIGH_LIMIT)
+                        globalSettings.trigramLimit -= 100;
+                    else
+                        globalSettings.trigramLimit -= 1000;
+                }
+
+                if (globalSettings.trigramLimit == 0)
+                    globalSettings.trigramLimit = 1;
+            }
+#endif
         }
 
+#ifdef NORMAL_TOGGLE_ENABLE
         if (globalSettings.algorithmSetting == ALGORITHM_COSINE)
             globalSettings.valueProcessingSetting = VALUE_NORMALIZE;
+#endif
 
         BeginDrawing();
 
@@ -347,8 +411,8 @@ int main(int, char*[]) {
         DrawText(languageString.c_str(), 20, 310, 48, BROWN);
 
         if (timer_end != 0) {
-            char result[24];
-            sprintf(result, "%ld", timer_end - timer_start);
+            char result[20];
+            sprintf(result, "%.4f", timer_end - timer_start);
             DrawText("Resultado:", 20, 280, 24, BROWN);
             DrawText("Tiempo necesario (ms):", 20, 365, 24, BROWN);
             DrawText(result, 20, 400, 36, BROWN);

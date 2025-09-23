@@ -16,14 +16,19 @@
 #include <string>
 #include <unordered_map>
 
-#include "Text.h"
 #include "CSVData.h"
+#include "Text.h"
 
+// #define NORMAL_TOGGLE_ENABLE  //(Un)commenting toggles the normalized/real values swap with a
+// trigram limit bar
+
+#ifdef NORMAL_TOGGLE_ENABLE
 // value_t: holds both real and normalized values
 struct value_t {
     float real;
     float normalized;
 };
+#endif
 
 // algorithmSetting_t: indicates which similarity model to use
 typedef enum { ALGORITHM_COSINE, ALGORITHM_JACCARD, ALGORITHM_CAVNARTRENKLE } algorithmSetting_t;
@@ -33,13 +38,23 @@ typedef enum { VALUE_NORMALIZE = 0, VALUE_REAL } valueProcessingSetting_t;
 // settings_t: determines settings across the programs
 struct settings_t {
     algorithmSetting_t algorithmSetting = ALGORITHM_COSINE;
+#ifdef NORMAL_TOGGLE_ENABLE
     valueProcessingSetting_t valueProcessingSetting = VALUE_NORMALIZE;
+#else
+    const valueProcessingSetting_t valueProcessingSetting = VALUE_NORMALIZE;
+    unsigned int trigramLimit = 100;
+    unsigned int trigramCurrentCount = 0;
+#endif
     unsigned int lineLimit = 100;
 };
 
 // TrigramProfile: map of trigram -> frequency
 // Swapped map for unordered_map
+#ifdef NORMAL_TOGGLE_ENABLE
 typedef std::unordered_map<std::string, value_t> TrigramProfile;
+#else
+typedef std::unordered_map<std::string, float> TrigramProfile;
+#endif
 
 // TrigramList: list of trigrams
 typedef std::list<std::string> TrigramList;
@@ -64,7 +79,6 @@ std::string identifyLanguageFromPath(char* path,
 std::string identifyLanguageFromClipboard(std::string& clipboard,
                                           LanguageProfiles& languages,
                                           settings_t& globalSettings);
-
 
 void addToTrigramProfile(const std::string& text, TrigramProfile& profile);
 
